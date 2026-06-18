@@ -2,6 +2,7 @@
 let areasData = [];
 const infoTitle = document.getElementById('infoTitle');
 const infoText = document.getElementById('infoText');
+const galleryImage = document.getElementById('galleryImage');
 const svg = document.getElementById('imagemapSVG');
 const circlesContainer = document.getElementById('circlesContainer');
 const imageMap = document.getElementById('imageMap');
@@ -26,6 +27,7 @@ async function loadXMLData() {
         areasData = Array.from(areaElements).map(area => ({
             id: area.querySelector('id').textContent,
             title: area.querySelector('title').textContent,
+            image: area.querySelector('image').textContent,
             content: area.querySelector('content').textContent,
             x: parseInt(area.querySelector('x').textContent),
             y: parseInt(area.querySelector('y').textContent),
@@ -96,6 +98,8 @@ function renderCircles() {
 function handleAreaClick(area) {
     infoTitle.textContent = area.title;
     infoText.textContent = area.content;
+    galleryImage.src = area.image;
+    galleryImage.alt = area.title;
     
     // Update active state
     document.querySelectorAll('.circle-icon').forEach(el => {
