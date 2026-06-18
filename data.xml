@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <imagemap xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<settings>
+		<pageTitle>Interactive Imagemap</pageTitle>
+		<pageColor>#ffffff</pageColor>
+		<backgroundImage></backgroundImage>
+		<mapWidth>800</mapWidth>
+		<mapHeight>600</mapHeight>
+	</settings>
 	<areas>
 		<area>
 			<id>1</id>

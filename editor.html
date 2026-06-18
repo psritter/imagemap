@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imagemap Settings Editor</title>
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+    <div class="editor-container">
+        <header class="editor-header">
+            <h1>Imagemap Settings Editor</h1>
+            <div class="header-actions">
+                <a href="index.html" class="btn btn-secondary">Back to Imagemap</a>
+            </div>
+        </header>
+
+        <main class="editor-main">
+            <!-- Settings Panel -->
+            <section class="settings-panel">
+                <h2>Page Settings</h2>
+                <form id="settingsForm" class="settings-form">
+                    <div class="form-group">
+                        <label for="pageTitle">Page Title:</label>
+                        <input type="text" id="pageTitle" name="pageTitle" placeholder="Enter page title">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pageColor">Page Background Color:</label>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="pageColor" name="pageColor">
+                            <input type="text" id="pageColorText" name="pageColorText" placeholder="#ffffff" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="backgroundImage">Background Image:</label>
+                        <div class="file-select-wrapper">
+                            <select id="backgroundImage" name="backgroundImage" class="image-select">
+                                <option value="">None</option>
+                            </select>
+                            <span class="image-preview-small" id="bgImagePreview"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="mapWidth">Map Width (px):</label>
+                            <input type="number" id="mapWidth" name="mapWidth" min="200" max="2000" value="800">
+                        </div>
+                        <div class="form-group">
+                            <label for="mapHeight">Map Height (px):</label>
+                            <input type="number" id="mapHeight" name="mapHeight" min="200" max="2000" value="600">
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Canvas and Areas Section -->
+            <div class="content-row">
+                <!-- Canvas for Point Placement -->
+                <section class="canvas-panel">
+                    <h2>Place Clickable Points</h2>
+                    <p class="help-text">Click on the canvas to add a new point or select an area to edit it.</p>
+                    <div class="canvas-wrapper">
+                        <svg 
+                            id="editorSVG"
+                            width="800" 
+                            height="600" 
+                            viewBox="0 0 800 600"
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="editor-svg"
+                        >
+                            <defs>
+                                <pattern id="bgPattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+                                    <rect width="100" height="100" fill="#f0f0f0"/>
+                                    <rect width="50" height="50" fill="#e0e0e0"/>
+                                    <rect x="50" y="50" width="50" height="50" fill="#e0e0e0"/>
+                                </pattern>
+                            </defs>
+                            <rect id="mapBackground" width="800" height="600" fill="url(#bgPattern)"/>
+                            <g id="pointsContainer"></g>
+                        </svg>
+                    </div>
+                    <div class="canvas-info">
+                        <p><strong>Selected Point:</strong> <span id="selectedPointInfo">None</span></p>
+                    </div>
+                </section>
+
+                <!-- Areas List Panel -->
+                <section class="areas-panel">
+                    <div class="areas-header">
+                        <h2>Info Points</h2>
+                        <button id="addAreaBtn" class="btn btn-primary">+ Add Point</button>
+                    </div>
+
+                    <div class="areas-list" id="areasList">
+                        <!-- Areas will be populated here -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Area Editor Modal -->
+            <div id="areaEditorModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="modalTitle">Add New Info Point</h2>
+                        <button class="modal-close" id="closeModalBtn">&times;</button>
+                    </div>
+                    <form id="areaForm" class="area-form">
+                        <div class="form-group">
+                            <label for="areaTitle">Title:</label>
+                            <input type="text" id="areaTitle" name="areaTitle" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="areaContent">Description:</label>
+                            <textarea id="areaContent" name="areaContent" rows="4" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="areaImage">Image File:</label>
+                            <select id="areaImage" name="areaImage" class="image-select" required>
+                                <option value="">Select an image...</option>
+                            </select>
+                            <div class="image-preview" id="imagePreview"></div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="areaX">X Position:</label>
+                                <input type="number" id="areaX" name="areaX" min="0" max="800" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="areaY">Y Position:</label>
+                                <input type="number" id="areaY" name="areaY" min="0" max="600" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="areaRadius">Radius:</label>
+                                <input type="number" id="areaRadius" name="areaRadius" min="10" max="100" value="40" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="areaColor">Color:</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="areaColor" name="areaColor" value="#3498db">
+                                    <input type="text" id="areaColorText" name="areaColorText" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" id="deleteAreaBtn" class="btn btn-danger">Delete</button>
+                            <div>
+                                <button type="button" id="cancelAreaBtn" class="btn btn-secondary">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button id="resetBtn" class="btn btn-secondary">Reset to Defaults</button>
+                <button id="cancelBtn" class="btn btn-secondary">Cancel</button>
+                <button id="saveBtn" class="btn btn-success">Save Changes</button>
+            </div>
+        </main>
+
+        <footer class="editor-footer">
+            <p>&copy; 2026 Imagemap Editor. All changes are saved to data.xml.</p>
+        </footer>
+    </div>
+
+    <script src="editor.js"></script>
+</body>
+</html>
