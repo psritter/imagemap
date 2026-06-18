@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<imagemap>
+  <areas>
+    <area>
+      <id>1</id>
+      <title>Technology</title>
+      <content>Explore the latest innovations and technological advancements. This section covers cutting-edge developments in software, hardware, and digital transformation.</content>
+      <x>150</x>
+      <y>150</y>
+      <radius>40</radius>
+      <color>#3498db</color>
+    </area>
+    <area>
+      <id>2</id>
+      <title>Business</title>
+      <content>Discover business strategies, market analysis, and corporate insights. Learn about successful entrepreneurship and organizational best practices.</content>
+      <x>400</x>
+      <y>150</y>
+      <radius>40</radius>
+      <color>#2ecc71</color>
+    </area>
+    <area>
+      <id>3</id>
+      <title>Education</title>
+      <content>Find resources for learning and professional development. Access courses, certifications, and educational materials to enhance your skills.</content>
+      <x>650</x>
+      <y>150</y>
+      <radius>40</radius>
+      <color>#e74c3c</color>
+    </area>
+    <area>
+      <id>4</id>
+      <title>Health &amp; Wellness</title>
+      <content>Promote your well-being with health tips, fitness routines, and wellness advice. Learn about nutrition, mental health, and preventive care.</content>
+      <x>150</x>
+      <y>450</y>
+      <radius>40</radius>
+      <color>#f39c12</color>
+    </area>
+    <area>
+      <id>5</id>
+      <title>Entertainment</title>
+      <content>Enjoy entertainment content including movies, music, games, and pop culture news. Stay updated with the latest in the entertainment world.</content>
+      <x>400</x>
+      <y>450</y>
+      <radius>40</radius>
+      <color>#9b59b6</color>
+    </area>
+    <area>
+      <id>6</id>
+      <title>Travel</title>
+      <content>Discover travel destinations, travel tips, and adventure ideas. Plan your next trip and explore the world's most exciting locations.</content>
+      <x>650</x>
+      <y>450</y>
+      <radius>40</radius>
+      <color>#1abc9c</color>
+    </area>
+  </areas>
+</imagemap>

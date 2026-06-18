@@ -1,114 +1,153 @@
-// Get all area elements from the imagemap
-const areas = document.querySelectorAll('area');
+// Global state
+let areasData = [];
 const infoTitle = document.getElementById('infoTitle');
 const infoText = document.getElementById('infoText');
-const responsiveImage = document.getElementById('responsiveImage');
+const svg = document.getElementById('imagemapSVG');
+const circlesContainer = document.getElementById('circlesContainer');
 const imageMap = document.getElementById('imageMap');
 
-// Scale factor for responsive imagemap
-let scaleFactor = 1;
+/**
+ * Fetch and parse the XML file
+ */
+async function loadXMLData() {
+    try {
+        const response = await fetch('data.xml');
+        const xmlText = await response.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+        
+        // Check for parsing errors
+        if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
+            throw new Error('XML parsing error');
+        }
+        
+        // Extract area data from XML
+        const areaElements = xmlDoc.querySelectorAll('area');
+        areasData = Array.from(areaElements).map(area => ({
+            id: area.querySelector('id').textContent,
+            title: area.querySelector('title').textContent,
+            content: area.querySelector('content').textContent,
+            x: parseInt(area.querySelector('x').textContent),
+            y: parseInt(area.querySelector('y').textContent),
+            radius: parseInt(area.querySelector('radius').textContent),
+            color: area.querySelector('color').textContent
+        }));
+        
+        console.log('Loaded areas from XML:', areasData);
+        return areasData;
+    } catch (error) {
+        console.error('Error loading XML:', error);
+        showError('Failed to load data. Please refresh the page.');
+        return [];
+    }
+}
 
 /**
- * Update the imagemap coordinates based on image size
- * This ensures the imagemap works responsively
+ * Create SVG circles from the areas data
  */
-function scaleImageMap() {
-    const img = document.getElementById('responsiveImage');
+function renderCircles() {
+    // Clear existing circles
+    circlesContainer.innerHTML = '';
     
-    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-        // Calculate scale factor based on displayed vs natural image size
-        scaleFactor = img.width / img.naturalWidth;
+    // Create circles for each area
+    areasData.forEach(area => {
+        // Create group for circle and text
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'circle-icon');
+        g.setAttribute('data-id', area.id);
+        g.setAttribute('tabindex', '0');
+        g.setAttribute('role', 'button');
+        g.setAttribute('aria-label', area.title);
         
-        // Update all area coordinates
-        areas.forEach(area => {
-            const coords = area.dataset.originalCoords || area.coords;
-            if (!area.dataset.originalCoords) {
-                area.dataset.originalCoords = area.coords;
+        // Create circle
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', area.x);
+        circle.setAttribute('cy', area.y);
+        circle.setAttribute('r', area.radius);
+        circle.setAttribute('fill', area.color);
+        circle.setAttribute('stroke', '#fff');
+        circle.setAttribute('stroke-width', '2');
+        
+        // Create text label (show first char or number)
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', area.x);
+        text.setAttribute('y', area.y);
+        text.setAttribute('class', 'circle-label');
+        text.textContent = area.id;
+        
+        g.appendChild(circle);
+        g.appendChild(text);
+        circlesContainer.appendChild(g);
+        
+        // Add event listeners
+        g.addEventListener('click', () => handleAreaClick(area));
+        g.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleAreaClick(area);
             }
-            
-            const coordsArray = coords.split(',').map(coord => {
-                return Math.round(parseInt(coord) * scaleFactor);
-            });
-            
-            area.coords = coordsArray.join(',');
         });
-    }
+    });
 }
 
 /**
  * Handle area click to update info content
  */
-function handleAreaClick(event) {
-    event.preventDefault();
+function handleAreaClick(area) {
+    infoTitle.textContent = area.title;
+    infoText.textContent = area.content;
     
-    const title = event.target.dataset.title;
-    const content = event.target.dataset.content;
-    const areaId = event.target.dataset.id;
-    
-    // Update the info area
-    infoTitle.textContent = title;
-    infoText.textContent = content;
-    
-    // Add a visual highlight effect
-    addHighlightEffect(areaId);
+    // Update active state
+    document.querySelectorAll('.circle-icon').forEach(el => {
+        el.classList.remove('active');
+    });
+    document.querySelector(`[data-id="${area.id}"]`).classList.add('active');
 }
 
 /**
- * Add visual feedback when an area is clicked
+ * Show error message if data fails to load
  */
-function addHighlightEffect(areaId) {
-    // Remove previous highlight
-    areas.forEach(area => area.classList.remove('active'));
-    
-    // Add highlight to clicked area
-    const clickedArea = document.querySelector(`area[data-id="${areaId}"]`);
-    if (clickedArea) {
-        clickedArea.classList.add('active');
-    }
+function showError(message) {
+    infoTitle.textContent = 'Error';
+    infoText.textContent = message;
 }
 
 /**
- * Initialize event listeners
+ * Responsive SVG scaling
  */
-function initializeEventListeners() {
-    areas.forEach(area => {
-        // Click handler
-        area.addEventListener('click', handleAreaClick);
-        
-        // Keyboard accessibility
-        area.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                handleAreaClick(event);
-            }
-        });
-        
-        // Tab accessibility
-        area.setAttribute('tabindex', '0');
+function makeResponsive() {
+    // SVG automatically scales with viewBox, but we can add resize handlers if needed
+    window.addEventListener('resize', () => {
+        // Trigger re-render if needed
     });
 }
 
 /**
- * Initialize the imagemap
+ * Initialize the application
  */
-function initialize() {
-    // Set up event listeners
-    initializeEventListeners();
-    
-    // Scale imagemap on load
-    responsiveImage.addEventListener('load', scaleImageMap);
-    window.addEventListener('resize', scaleImageMap);
-    
-    // Initial scale if image is already loaded
-    if (responsiveImage.complete) {
-        scaleImageMap();
-    }
-    
-    // Load first area by default
-    if (areas.length > 0) {
-        handleAreaClick({ 
-            target: areas[0],
-            preventDefault: () => {}
-        });
+async function initialize() {
+    try {
+        // Load data from XML
+        await loadXMLData();
+        
+        if (areasData.length === 0) {
+            showError('No areas found in data.xml');
+            return;
+        }
+        
+        // Render circles
+        renderCircles();
+        
+        // Set up responsive behavior
+        makeResponsive();
+        
+        // Load first area by default
+        handleAreaClick(areasData[0]);
+        
+        console.log('Application initialized successfully');
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showError('Failed to initialize. Check console for details.');
     }
 }
 
@@ -118,8 +157,3 @@ if (document.readyState === 'loading') {
 } else {
     initialize();
 }
-
-// Additional: Handle orientation changes
-window.addEventListener('orientationchange', () => {
-    setTimeout(scaleImageMap, 100);
-});

@@ -15,67 +15,23 @@
 
         <main>
             <div class="imagemap-wrapper">
-                <img 
-                    src="data:image/svg+xml,%3Csvg width='800' height='600' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='800' height='600' fill='%23f0f0f0'/%3E%3Crect x='50' y='50' width='200' height='200' fill='%233498db' stroke='%23333' stroke-width='2'/%3E%3Ctext x='150' y='155' font-size='24' font-weight='bold' text-anchor='middle' fill='white'%3EArea 1%3C/text%3E%3Crect x='300' y='50' width='200' height='200' fill='%232ecc71' stroke='%23333' stroke-width='2'/%3E%3Ctext x='400' y='155' font-size='24' font-weight='bold' text-anchor='middle' fill='white'%3EArea 2%3C/text%3E%3Crect x='550' y='50' width='200' height='200' fill='%23e74c3c' stroke='%23333' stroke-width='2'/%3E%3Ctext x='650' y='155' font-size='24' font-weight='bold' text-anchor='middle' fill='white'%3EArea 3%3C/text%3E%3Crect x='50' y='300' width='200' height='200' fill='%23f39c12' stroke='%23333' stroke-width='2'/%3E%3Ctext x='150' y='405' font-size='24' font-weight='bold' text-anchor='middle' fill='white'%3EArea 4%3C/text%3E%3Crect x='300' y='300' width='200' height='200' fill='%239b59b6' stroke='%23333' stroke-width='2'/%3E%3Ctext x='400' y='405' font-size='24' font-weight='bold' text-anchor='middle' fill='white'%3EArea 5%3C/text%3E%3Crect x='550' y='300' width='200' height='200' fill='%231abc9c' stroke='%23333' stroke-width='2'/%3E%3Ctext x='650' y='405' font-size='24' font-weight='bold' text-anchor='middle' fill='white'%3EArea 6%3C/text%3E%3C/svg%3E"
-                    alt="Interactive Map"
-                    id="responsiveImage"
-                    usemap="#imageMap"
+                <svg 
+                    id="imagemapSVG"
+                    width="800" 
+                    height="600" 
+                    viewBox="0 0 800 600"
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="responsive-svg"
                 >
+                    <!-- Background -->
+                    <rect width="800" height="600" fill="#f0f0f0"/>
+                    
+                    <!-- Circle icons will be generated dynamically from XML -->
+                    <g id="circlesContainer"></g>
+                </svg>
+                
                 <map name="imageMap" id="imageMap">
-                    <area 
-                        shape="rect" 
-                        coords="50,50,250,250" 
-                        href="#area1" 
-                        alt="Area 1"
-                        data-id="1"
-                        data-title="Technology"
-                        data-content="Explore the latest innovations and technological advancements. This section covers cutting-edge developments in software, hardware, and digital transformation."
-                    >
-                    <area 
-                        shape="rect" 
-                        coords="300,50,500,250" 
-                        href="#area2" 
-                        alt="Area 2"
-                        data-id="2"
-                        data-title="Business"
-                        data-content="Discover business strategies, market analysis, and corporate insights. Learn about successful entrepreneurship and organizational best practices."
-                    >
-                    <area 
-                        shape="rect" 
-                        coords="550,50,750,250" 
-                        href="#area3" 
-                        alt="Area 3"
-                        data-id="3"
-                        data-title="Education"
-                        data-content="Find resources for learning and professional development. Access courses, certifications, and educational materials to enhance your skills."
-                    >
-                    <area 
-                        shape="rect" 
-                        coords="50,300,250,500" 
-                        href="#area4" 
-                        alt="Area 4"
-                        data-id="4"
-                        data-title="Health & Wellness"
-                        data-content="Promote your well-being with health tips, fitness routines, and wellness advice. Learn about nutrition, mental health, and preventive care."
-                    >
-                    <area 
-                        shape="rect" 
-                        coords="300,300,500,500" 
-                        href="#area5" 
-                        alt="Area 5"
-                        data-id="5"
-                        data-title="Entertainment"
-                        data-content="Enjoy entertainment content including movies, music, games, and pop culture news. Stay updated with the latest in the entertainment world."
-                    >
-                    <area 
-                        shape="rect" 
-                        coords="550,300,750,500" 
-                        href="#area6" 
-                        alt="Area 6"
-                        data-id="6"
-                        data-title="Travel"
-                        data-content="Discover travel destinations, travel tips, and adventure ideas. Plan your next trip and explore the world's most exciting locations."
-                    >
+                    <!-- Areas will be generated dynamically from XML -->
                 </map>
             </div>
 
@@ -88,7 +44,7 @@
         </main>
 
         <footer>
-            <p>&copy; 2024 Interactive Imagemap Demo. Responsive and accessible.</p>
+            <p>&copy; 2026 Pete Ritter. Responsive and accessible.</p>
         </footer>
     </div>
 
