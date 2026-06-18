@@ -49,10 +49,9 @@ header p {
 /* Main Content Layout */
 main {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 30px;
     margin-bottom: 40px;
-    align-items: start;
 }
 
 /* Imagemap Wrapper */
@@ -100,15 +99,33 @@ main {
     pointer-events: none;
 }
 
+/* Images Gallery Styles */
+.images-gallery {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    min-height: 280px;
+}
+
+.gallery-image {
+    width: 360px;
+    height: 240px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
 /* Info Area Styles */
 .info-area {
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 30px;
-    position: sticky;
-    top: 20px;
-    border-left: 4px solid var(--secondary-color);
+    border-top: 4px solid var(--secondary-color);
 }
 
 .info-content {
