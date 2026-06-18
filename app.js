@@ -1,11 +1,35 @@
 // Global state
 let areasData = [];
+let pageSettings = {
+    pageTitle: 'Interactive Imagemap',
+    pageColor: '#ffffff',
+    backgroundImage: '',
+    mapWidth: 800,
+    mapHeight: 600
+};
+
 const infoTitle = document.getElementById('infoTitle');
 const infoText = document.getElementById('infoText');
 const galleryImage = document.getElementById('galleryImage');
 const svg = document.getElementById('imagemapSVG');
 const circlesContainer = document.getElementById('circlesContainer');
 const imageMap = document.getElementById('imageMap');
+
+/**
+ * Apply page settings to the DOM
+ */
+function applyPageSettings() {
+    document.title = pageSettings.pageTitle;
+    document.querySelector('header h1').textContent = pageSettings.pageTitle;
+    document.body.style.backgroundColor = pageSettings.pageColor;
+    
+    if (pageSettings.backgroundImage) {
+        const mapWrapper = document.querySelector('.imagemap-wrapper');
+        if (mapWrapper) {
+            mapWrapper.style.backgroundImage = `url('${pageSettings.backgroundImage}')`;
+        }
+    }
+}
 
 /**
  * Fetch and parse the XML file
@@ -22,6 +46,19 @@ async function loadXMLData() {
             throw new Error('XML parsing error');
         }
         
+        // Load page settings
+        const settings = xmlDoc.querySelector('settings');
+        if (settings) {
+            pageSettings.pageTitle = settings.querySelector('pageTitle')?.textContent || 'Interactive Imagemap';
+            pageSettings.pageColor = settings.querySelector('pageColor')?.textContent || '#ffffff';
+            pageSettings.backgroundImage = settings.querySelector('backgroundImage')?.textContent || '';
+            pageSettings.mapWidth = parseInt(settings.querySelector('mapWidth')?.textContent || '800');
+            pageSettings.mapHeight = parseInt(settings.querySelector('mapHeight')?.textContent || '600');
+        }
+        
+        // Apply page settings
+        applyPageSettings();
+        
         // Extract area data from XML
         const areaElements = xmlDoc.querySelectorAll('area');
         areasData = Array.from(areaElements).map(area => ({
@@ -35,6 +72,7 @@ async function loadXMLData() {
             color: area.querySelector('color').textContent
         }));
         
+        console.log('Loaded page settings:', pageSettings);
         console.log('Loaded areas from XML:', areasData);
         return areasData;
     } catch (error) {
@@ -138,6 +176,11 @@ async function initialize() {
             showError('No areas found in data.xml');
             return;
         }
+        
+        // Update SVG dimensions based on settings
+        svg.setAttribute('width', pageSettings.mapWidth);
+        svg.setAttribute('height', pageSettings.mapHeight);
+        svg.setAttribute('viewBox', `0 0 ${pageSettings.mapWidth} ${pageSettings.mapHeight}`);
         
         // Render circles
         renderCircles();
