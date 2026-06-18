@@ -1,0 +1,2 @@
+# imagemap
+test image maps
