@@ -3,9 +3,9 @@
 	<areas>
 		<area>
 			<id>1</id>
-			<title>Item Number One</title>
+			<title>Mary Cassatt - Afternoon Tea Party</title>
 			<image>images/item-1.jpg</image>
-			<content>Explore the latest innovations and technological advancements. This section covers cutting-edge developments in software, hardware, and digital transformation.</content>
+			<content>1891. Drypoint, color aquatint, and gold paint, 17 x 12 in. (43.2 x 30.5 cm) (sheet). SLAM</content>
 			<x>150</x>
 			<y>150</y>
 			<radius>40</radius>
@@ -13,9 +13,9 @@
 		</area>
 		<area>
 			<id>2</id>
-			<title>Iten Number Two</title>
+			<title>Eugène Delacroix - Lion of Atlas</title>
 			<image>images/item-2.jpg</image>
-			<content>Discover business strategies, market analysis, and corporate insights. Learn about successful entrepreneurship and organizational best practices.</content>
+			<content>1829. Lithograph, 13 x 18 1/4 in. (33 x 46.4 cm). SLAM</content>
 			<x>250</x>
 			<y>150</y>
 			<radius>40</radius>
@@ -23,9 +23,9 @@
 		</area>
 		<area>
 			<id>3</id>
-			<title>Item Number Three</title>
+			<title>Franz Marc - Tiger</title>
 			<image>images/item-3.jpg</image>
-			<content>Find resources for learning and professional development. Access courses, certifications, and educational materials to enhance your skills.</content>
+			<content>1912. Woodcut, state i/ii. Image: 7 7/8 x 9 7/16 in. (20 x 24 cm); sheet: 10 13/16 x 15 9/16 in. (27.5 x 39.5 cm). SLAM</content>
 			<x>350</x>
 			<y>150</y>
 			<radius>40</radius>
@@ -33,9 +33,9 @@
 		</area>
 		<area>
 			<id>4</id>
+			<title>Jean-François Millet - Woman Carding Wool</title>
 			<image>images/item-4.jpg</image>
-			<title>Iten Number Four</title>
-			<content>Promote your well-being with health tips, fitness routines, and wellness advice. Learn about nutrition, mental health, and preventive care.</content>
+			<content>1855. Etching, plate: 10 1/16 x 6 7/8 in. (25.6 x 17.5 cm); sheet: 14 x 9 1/4 in. (35.6 x 23.5 cm). SLAM</content>
 			<x>450</x>
 			<y>150</y>
 			<radius>40</radius>
@@ -43,9 +43,9 @@
 		</area>
 		<area>
 			<id>5</id>
+			<title>Marcantonio Raimondi - Two Women with the Signs of Libra and Scorpio</title>
 			<image>images/item-5.jpg</image>
-			<title>Item Number Five</title>
-			<content>Enjoy entertainment content including movies, music, games, and pop culture news. Stay updated with the latest in the entertainment world.</content>
+			<content>Circa 1517 and 1520. Engraving, only state; sheet (trimmed): 11 5/8 x 8 in. (29.5 x 20.3 cm). SLAM</content>
 			<x>550</x>
 			<y>150</y>
 			<radius>40</radius>
@@ -53,59 +53,59 @@
 		</area>
 		<area>
 			<id>6</id>
+			<title>Rembrandt van Rijn - Rembrandt's Mother</title>
 			<image>images/item-6.jpg</image>
-			<title>Iten Number Six</title>
-			<content>Discover travel destinations, travel tips, and adventure ideas. Plan your next trip and explore the world's most exciting locations.</content>
+			<content>Circa 1629 and 1633. Etching print and engraving, state ii/iii: 14.9 cm (5.8 in) x 13.2 cm (5.1 in). SLAM</content>
 			<x>650</x>
 			<y>150</y>
 			<radius>40</radius>
 			<color>#1abc9c</color>
 		</area>
 		<area>
-			<image>images/item-7.jpg</image>
 			<id>7</id>
-			<title>Item Number Seven</title>
-			<content>Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah.</content>
+			<title>Rembrandt van Rijn - An Elderly Woman</title>
+			<image>images/item-7.jpg</image>
+			<content>Circa 1632-1635. Etching print, intermediate state between ii and iii: 14.9 cm (5.8 in) x 11.7 cm (4.6 in). SLAM</content>
 			<x>150</x>
 			<y>450</y>
 			<radius>40</radius>
 			<color>#3498db</color>
 		</area>
 		<area>
-			<image>images/item-8.jpg</image>
 			<id>8</id>
-			<title>Iten Number Eight</title>
-			<content>Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah.</content>
+			<title>Rembrandt van Rijn - Ephraim Bueno, Physician</title>
+			<image>images/item-8.jpg</image>
+			<content>1647. Etching print, drypoint print and burin, state ii/ii: 24 cm (9.4 in) x  17.7 cm (6.9 in). SLAM</content>
 			<x>250</x>
 			<y>450</y>
 			<radius>40</radius>
 			<color>#2ecc71</color>
 		</area>
-		<aimage>images/item-9.jpg</image>
-			<rea>
+		<area>
 			<id>9</id>
-			<title>Item Number Nine</title>
-			<content>Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah.</content>
+			<title>Rembrandt van Rijn - Jacob's Ladder</title>
+			<image>images/item-9.jpg</image>
+			<content>1655. Etching print, engraving and drypoint print, state i/iii: 10.9 cm (4.2 in) x 7.1 cm (2.7 in). SLAM</content>
 			<x>350</x>
 			<y>450</y>
 			<radius>40</radius>
 			<color>#e74c3c</color>
 		</area>
-		<aimage>images/item-10.jpg</image>
-			<rea>
+		<area>
 			<id>10</id>
-			<title>Iten Number Ten</title>
-			<content>Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah.</content>
+			<title>Rembrandt van Rijn - Landscape with a Cottage and a Large Tree</title>
+			<image>images/item-10.jpg</image>
+			<content>1641. Etching print, wash on paper: 12.9 cm (5 in) x 32 cm (12.5 in). SLAM</content>
 			<x>450</x>
 			<y>450</y>
 			<radius>40</radius>
 			<color>#f39c12</color>
 		</area>
-		<aimage>images/item-11.jpg</image>
-			<rea>
+		<area>
 			<id>11</id>
-			<title>Item Number Eleven</title>
-			<content>Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah.</content>
+			<title>Rembrandt van Rijn - Sheet of Studies</title>
+			<image>images/item-11.jpg</image>
+			<content>Circa 1641-1642. Etching print, state i/i: 13.8 cm (5.4 in) x 15.1 cm (5.9 in). SLAM</content>
 			<x>550</x>
 			<y>450</y>
 			<radius>40</radius>
@@ -113,8 +113,9 @@
 		</area>
 		<area>
 			<id>12</id>
-			<title>Iten Number Twelve</title>
-			<content>Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah, Blah.</content>
+			<title>Rembrandt van Rijn - The Artist Drawing from a Model</title>
+			<image>images/item-12.jpg</image>
+			<content>Circa 1639. Etching print, drypoint print and engraving, state ii/ii: 23.3 cm (9.1 in) x 18.4 cm (7.2 in). SLAM</content>
 			<x>650</x>
 			<y>450</y>
 			<radius>40</radius>
