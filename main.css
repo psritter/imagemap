@@ -1,0 +1,197 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --text-color: #333;
+    --light-bg: #f8f9fa;
+    --border-color: #ddd;
+    --transition: all 0.3s ease;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--light-bg);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styles */
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 3px solid var(--secondary-color);
+}
+
+header h1 {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+header p {
+    font-size: 1.1rem;
+    color: #666;
+}
+
+/* Main Content Layout */
+main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 40px;
+    align-items: start;
+}
+
+/* Imagemap Wrapper */
+.imagemap-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    overflow: hidden;
+}
+
+#responsiveImage {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    cursor: pointer;
+}
+
+/* Area Hover Effect */
+area {
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+/* Info Area Styles */
+.info-area {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    position: sticky;
+    top: 20px;
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+}
+
+#infoTitle {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    animation: slideIn 0.3s ease;
+}
+
+#infoText {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.8;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 8px;
+    margin-top: 40px;
+}
+
+footer p {
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2rem;
+    }
+
+    main {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .info-area {
+        position: static;
+        padding: 20px;
+    }
+
+    .imagemap-wrapper {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 15px;
+    }
+
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    header p {
+        font-size: 0.95rem;
+    }
+
+    .imagemap-wrapper {
+        padding: 10px;
+    }
+
+    .info-area {
+        padding: 15px;
+    }
+
+    #infoTitle {
+        font-size: 1.3rem;
+    }
+
+    #infoText {
+        font-size: 0.95rem;
+    }
+}
+
+/* Focus and Active States for Accessibility */
+area:focus,
+area:hover {
+    outline: 2px solid var(--secondary-color);
+}
+
+/* Highlight Animation for Info Area Update */
+.info-area {
+    border-left: 4px solid var(--secondary-color);
+}
