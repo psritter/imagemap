@@ -1,0 +1,11 @@
+node_modules/
+*.backup.*
+.DS_Store
+.env
+.env.local
+dist/
+build/
+.vscode/
+.idea/
+*.log
+npm-debug.log*
