@@ -43,32 +43,25 @@ const cancelBtn = document.getElementById('cancelBtn');
 const resetBtn = document.getElementById('resetBtn');
 
 /**
- * Load available images from the images folder
+ * Load available images from images.json manifest
  */
 async function loadImageFiles() {
     try {
-        // Fetch the images folder listing
-        const response = await fetch('images/');
-        if (response.ok) {
-            const text = await response.text();
-            // Parse HTML to extract image filenames (basic parsing)
-            const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(text, 'text/html');
-            
-            // Try to extract file links from directory listing
-            const links = doc.querySelectorAll('a');
-            links.forEach(link => {
-                const href = link.href;
-                const filename = href.substring(href.lastIndexOf('/') + 1);
-                if (imageExtensions.some(ext => filename.toLowerCase().endsWith(ext))) {
-                    imageFiles.push(`images/${filename}`);
-                }
-            });
+        const response = await fetch('images.json');
+        if (!response.ok) {
+            throw new Error('Failed to load images.json');
+        }
+        
+        const data = await response.json();
+        if (data.images && Array.isArray(data.images)) {
+            imageFiles = data.images;
+            console.log('Loaded images from manifest:', imageFiles);
+        } else {
+            throw new Error('Invalid images.json format');
         }
     } catch (error) {
-        console.error('Could not fetch directory listing:', error);
-        // Fallback: provide common image options if directory listing fails
+        console.error('Could not load images manifest:', error);
+        // Fallback: provide common image options if manifest loading fails
         imageFiles = [
             'images/item-1.jpg',
             'images/item-2.jpg',
@@ -82,6 +75,7 @@ async function loadImageFiles() {
             'images/item-10.jpg',
             'images/item-11.jpg'
         ];
+        console.warn('Using fallback image list');
     }
     
     populateImageSelects();
