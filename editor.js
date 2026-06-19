@@ -41,13 +41,21 @@ const areaColorText = document.getElementById('areaColorText');
 const saveBtn = document.getElementById('saveBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 const resetBtn = document.getElementById('resetBtn');
+const exportBtn = document.getElementById('exportBtn');
 
 /**
  * Load available images from images.json manifest
  */
 async function loadImageFiles() {
     try {
-        const response = await fetch('images.json');
+        // Try to load from API first, then fallback to direct file
+        let response;
+        try {
+            response = await fetch('/api/images');
+        } catch (e) {
+            response = await fetch('images.json');
+        }
+        
         if (!response.ok) {
             throw new Error('Failed to load images.json');
         }
@@ -134,10 +142,10 @@ async function loadXMLData() {
             color: area.querySelector('color').textContent
         }));
         
-        console.log('Loaded map data:', mapData);
+        console.log('Loaded map data from XML:', mapData);
     } catch (error) {
-        console.error('Error loading XML:', error);
-        alert('Failed to load data. Please refresh the page.');
+        console.warn('Could not load XML data:', error);
+        console.log('Will use default or locally saved data');
     }
 }
 
@@ -424,11 +432,75 @@ function deleteArea(e) {
 }
 
 /**
- * Save all changes to XML
+ * Save all changes to local browser storage
+ */
+function saveLocally() {
+    try {
+        // Update settings
+        mapData.settings.pageTitle = pageTitle.value;
+        mapData.settings.pageColor = pageColor.value;
+        mapData.settings.backgroundImage = backgroundImage.value;
+        mapData.settings.mapWidth = parseInt(mapWidth.value);
+        mapData.settings.mapHeight = parseInt(mapHeight.value);
+        
+        // Save to localStorage
+        localStorage.setItem('imagemapData', JSON.stringify(mapData));
+        console.log('Changes saved to browser storage');
+        return true;
+    } catch (error) {
+        console.error('Error saving to localStorage:', error);
+        alert('Failed to save to browser storage');
+        return false;
+    }
+}
+
+/**
+ * Load all changes from local browser storage
+ */
+function loadLocally() {
+    try {
+        const stored = localStorage.getItem('imagemapData');
+        if (stored) {
+            const data = JSON.parse(stored);
+            mapData = data;
+            console.log('Loaded data from browser storage');
+            return true;
+        }
+    } catch (error) {
+        console.error('Error loading from localStorage:', error);
+    }
+    return false;
+}
+
+/**
+ * Save all changes and prepare for export
  */
 async function saveAllChanges() {
     try {
-        // Update settings
+        // Save to local browser storage first
+        if (!saveLocally()) {
+            return;
+        }
+        
+        alert(
+            'Changes saved locally! ✅\n\n' +
+            'Next steps:\n' +
+            '1. Click "Export Files" to download your data and webpage\n' +
+            '2. Upload the exported files to your university server\n\n' +
+            'Or click "Cancel" to continue editing.'
+        );
+    } catch (error) {
+        console.error('Error saving changes:', error);
+        alert('Failed to save changes');
+    }
+}
+
+/**
+ * Export data and files for uploading to server
+ */
+function exportFiles() {
+    try {
+        // Update settings before export
         mapData.settings.pageTitle = pageTitle.value;
         mapData.settings.pageColor = pageColor.value;
         mapData.settings.backgroundImage = backgroundImage.value;
@@ -438,30 +510,143 @@ async function saveAllChanges() {
         // Generate XML
         const xml = generateXML();
         
-        // Send to server to save
-        const response = await fetch('data.xml', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/xml'
-            },
-            body: xml
-        });
+        // Generate updated app.js with inline data (optional - for reference)
+        const jsWithData = generateAppJsWithData();
         
-        if (response.ok) {
-            alert('Changes saved successfully!');
-            // Redirect back to imagemap
-            window.location.href = 'index.html';
-        } else {
-            // Fallback: save to localStorage if server save fails
-            localStorage.setItem('mapData', JSON.stringify(mapData));
-            alert('Note: Changes saved to browser. Set up a backend to save to server.');
-        }
+        // Create exports object
+        const exports = {
+            'data.xml': xml,
+            'images.json': JSON.stringify({ images: imageFiles }, null, 2),
+            'UPLOAD_INSTRUCTIONS.txt': generateUploadInstructions()
+        };
+        
+        // Create zip file content or individual downloads
+        downloadFile('data.xml', xml, 'application/xml');
+        
+        // Small delay before next download
+        setTimeout(() => {
+            downloadFile('images.json', JSON.stringify({ images: imageFiles }, null, 2), 'application/json');
+        }, 200);
+        
+        setTimeout(() => {
+            downloadFile('UPLOAD_INSTRUCTIONS.txt', generateUploadInstructions(), 'text/plain');
+        }, 400);
+        
+        alert(
+            '📥 Files are downloading:\n' +
+            '✓ data.xml - Your updated configuration\n' +
+            '✓ images.json - Image manifest\n' +
+            '✓ UPLOAD_INSTRUCTIONS.txt - Setup guide\n\n' +
+            'To complete the setup on your university server:\n' +
+            '1. Upload all files (index.html, app.js, css, js, images, etc.)\n' +
+            '2. Replace data.xml with your downloaded version\n' +
+            '3. Update images.json if needed'
+        );
     } catch (error) {
-        console.error('Error saving changes:', error);
-        // Fallback to localStorage
-        localStorage.setItem('mapData', JSON.stringify(mapData));
-        alert('Changes saved to browser storage. To permanently save to data.xml, set up a backend.');
+        console.error('Error exporting files:', error);
+        alert('Failed to export files');
     }
+}
+
+/**
+ * Download a file to user's computer
+ */
+function downloadFile(filename, content, contentType) {
+    const blob = new Blob([content], { type: contentType });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+/**
+ * Generate app.js with inline data (for reference/documentation)
+ */
+function generateAppJsWithData() {
+    // This is optional - provides a reference version with data included
+    return `// Generated Imagemap Data (Reference)\nconst GENERATED_MAP_DATA = ${JSON.stringify(mapData, null, 2)};`;
+}
+
+/**
+ * Generate upload instructions
+ */
+function generateUploadInstructions() {
+    return `IMAGEMAP EXPORT - UPLOAD INSTRUCTIONS
+=====================================
+
+Generated: ${new Date().toLocaleString()}
+Map Title: ${mapData.settings.pageTitle}
+
+FILES INCLUDED:
+- data.xml          Your configuration file
+- images.json       Image manifest
+- UPLOAD_INSTRUCTIONS.txt  This file
+
+DEPLOYMENT STEPS:
+
+1. COPY ALL THESE FILES TO YOUR UNIVERSITY SERVER:
+   - index.html
+   - app.js
+   - editor.html
+   - editor.js
+   - editor.css
+   - main.css
+   - data.xml (use the exported version)
+   - images.json (use the exported version)
+   - images/ (entire folder with all images)
+
+2. DIRECTORY STRUCTURE ON SERVER:
+   public_html/
+   ├── index.html
+   ├── app.js
+   ├── editor.html
+   ├── editor.js
+   ├── editor.css
+   ├── main.css
+   ├── data.xml
+   ├── images.json
+   └── images/
+       ├── item-1.jpg
+       ├── item-2.jpg
+       └── ... (all your images)
+
+3. UPLOAD VIA:
+   - FTP/SFTP client
+   - University file manager
+   - Command line (scp, rsync)
+   - Web-based file uploader
+
+4. ACCESS YOUR IMAGEMAP:
+   http://yourserver.edu/path/to/index.html
+
+5. EDIT ON UNIVERSITY SERVER (Optional):
+   - Access editor.html on the server
+   - Changes will be saved to browser storage
+   - Export and download updated files to backup locally
+
+STATIC HOSTING:
+This is a fully static website. No server-side code needed.
+Works on any web hosting that serves HTML/CSS/JS/images.
+
+IMAGE UPDATES:
+To add new images after uploading:
+1. Upload image files to images/ folder on server
+2. Add image paths to images.json
+3. Reload the editor to see new images
+
+TROUBLESHOOTING:
+- If images don't load: Check images/ folder path and permissions
+- If editor won't load: Ensure all .js and .css files are uploaded
+- Check browser console (F12) for specific errors
+
+LOCAL EDITING RECOMMENDATION:
+Keep a copy of all files on your local machine as backup.
+Use the local editor to make changes, then export and upload.
+`;
 }
 
 /**
@@ -512,7 +697,7 @@ function escapeXML(str) {
 function resetToDefaults() {
     if (confirm('Reset all changes to defaults? This cannot be undone.')) {
         // Reset will be done on next load
-        localStorage.removeItem('mapData');
+        localStorage.removeItem('imagemapData');
         location.reload();
     }
 }
@@ -550,6 +735,7 @@ function setupEventListeners() {
     
     // Main buttons
     saveBtn.addEventListener('click', saveAllChanges);
+    exportBtn.addEventListener('click', exportFiles);
     cancelBtn.addEventListener('click', () => {
         if (confirm('Discard all changes?')) {
             window.location.href = 'index.html';
@@ -573,8 +759,13 @@ async function initialize() {
         // Load image files first
         await loadImageFiles();
         
-        // Load XML data
-        await loadXMLData();
+        // Check if there's locally saved data
+        const hasLocalData = loadLocally();
+        
+        if (!hasLocalData) {
+            // If no local data, try to load from XML
+            await loadXMLData();
+        }
         
         // Initialize UI
         initializeEditor();
@@ -582,7 +773,11 @@ async function initialize() {
         // Setup event listeners
         setupEventListeners();
         
-        console.log('Editor initialized successfully');
+        if (hasLocalData) {
+            console.log('Editor initialized with locally saved data');
+        } else {
+            console.log('Editor initialized successfully with XML data');
+        }
     } catch (error) {
         console.error('Error initializing editor:', error);
         alert('Failed to initialize editor. Please refresh the page.');
