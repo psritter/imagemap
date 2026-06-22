@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Interactive image map">
+  <title>{{TITLE}}</title>
+  <style>
+    /* Mobile-first responsive design */
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #f8f9fa;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    /* Header */
+    header {
+      background: #fff;
+      padding: 16px;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #222;
+    }
+
+    /* Main container - stack mobile first */
+    main {
+      display: flex;
+      flex-direction: column;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0;
+      gap: 0;
+    }
+
+    /* Image map section - top on mobile */
+    .image-map-section {
+      width: 100%;
+      background: #fff;
+      flex: 0 0 auto;
+    }
+
+    .image-map {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      background: #f0f0f0;
+    }
+
+    .image-map img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Hotspot base styles */
+    .hotspot {
+      position: absolute;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      /* Minimum 44px touch target (WCAG AA) */
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hotspot:hover {
+      filter: brightness(0.9);
+      z-index: 2;
+    }
+
+    .hotspot:focus {
+      outline: 2px solid #007bff;
+      outline-offset: 2px;
+    }
+
+    .hotspot:active {
+      transform: scale(0.95);
+    }
+
+    /* Hotspot circle style */
+    .hotspot.circle {
+      border-radius: 50%;
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .hotspot.circle:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Hotspot icon style */
+    .hotspot.icon {
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    .hotspot.icon:hover {
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)) brightness(1.1);
+    }
+
+    /* Info panel section - bottom on mobile */
+    .info-section {
+      width: 100%;
+      background: #fff;
+      padding: 16px;
+      flex: 1;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .info-panel {
+      min-height: 100px;
+    }
+
+    .info-panel img {
+      width: 100%;
+      height: auto;
+      max-width: 360px;
+      display: block;
+      margin: 0 auto 12px;
+      border-radius: 4px;
+    }
+
+    .info-panel h2 {
+      margin: 0 0 8px 0;
+      font-size: 1.25rem;
+      color: #222;
+    }
+
+    .info-panel p {
+      margin: 0;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .info-panel .placeholder {
+      color: #999;
+      font-style: italic;
+    }
+
+    /* Footer */
+    footer {
+      background: #f0f0f0;
+      padding: 12px 16px;
+      text-align: center;
+      color: #666;
+      font-size: 0.85rem;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    /* Tablet (768px+): Show info panel beside image on larger screens */
+    @media (min-width: 768px) {
+      main {
+        flex-direction: row;
+        gap: 0;
+      }
+
+      .image-map-section {
+        flex: 2;
+        border-right: 1px solid #e0e0e0;
+      }
+
+      .info-section {
+        flex: 1;
+        border-top: none;
+      }
+
+      header h1 {
+        font-size: 1.75rem;
+      }
+    }
+
+    /* Desktop (1200px+): Optimize spacing */
+    @media (min-width: 1200px) {
+      main {
+        min-height: 100vh;
+      }
+
+      .image-map-section {
+        flex: 3;
+      }
+
+      .info-section {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      header {
+        padding: 20px;
+      }
+
+      header h1 {
+        font-size: 2rem;
+      }
+
+      .info-section {
+        padding: 24px;
+      }
+    }
+
+    /* Accessibility: Ensure touch targets are large enough */
+    @media (hover: none) and (pointer: coarse) {
+      .hotspot {
+        min-width: 48px;
+        min-height: 48px;
+      }
+
+      /* Reduce hover effects on touch devices */
+      .hotspot:hover {
+        filter: none;
+      }
+
+      .hotspot:active {
+        filter: brightness(0.9);
+        transform: scale(0.98);
+      }
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: white;
+      }
+
+      .hotspot {
+        display: none;
+      }
+
+      .info-section {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>{{TITLE}}</h1>
+  </header>
+
+  <main>
+    <!-- Image Map Section (Top on mobile, Left on tablet+) -->
+    <section class="image-map-section">
+      <div class="image-map" id="imageMap">
+        <img id="mainImage" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="Loading...">
+        <!-- Hotspots will be inserted here -->
+      </div>
+    </section>
+
+    <!-- Info Panel Section (Bottom on mobile, Right on tablet+) -->
+    <section class="info-section">
+      <div class="info-panel" id="infoPanel">
+        <p class="placeholder">👆 Click a hotspot to learn more</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Created with Image Map Editor</p>
+  </footer>
+
+  <script>
+    // ===== CONFIGURATION (injected during export) =====
+    // Template placeholder: {{INJECTED_CONFIG}}
+    const CONFIG = {};
+
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', () => {
+      const mainImage = document.getElementById('mainImage');
+      const imageMap = document.getElementById('imageMap');
+      const infoPanel = document.getElementById('infoPanel');
+
+      // Set main image
+      if (CONFIG.mainImage) {
+        mainImage.src = CONFIG.mainImage;
+        mainImage.alt = document.querySelector('h1').textContent;
+      }
+
+      // Create hotspots
+      if (CONFIG.regions && CONFIG.regions.length > 0) {
+        CONFIG.regions.forEach((region, index) => {
+          const hotspot = document.createElement('div');
+          hotspot.className = region.icon ? 'hotspot icon' : 'hotspot circle';
+          hotspot.style.left = region.x + '%';
+          hotspot.style.top = region.y + '%';
+          hotspot.style.width = (region.size || 20) + 'px';
+          hotspot.style.height = (region.size || 20) + 'px';
+
+          if (region.icon) {
+            hotspot.style.backgroundImage = `url(${region.icon})`;
+            hotspot.alt = region.title || 'Hotspot';
+          } else {
+            hotspot.style.background = region.color || '#ff0000';
+          }
+
+          hotspot.setAttribute('role', 'button');
+          hotspot.setAttribute('tabindex', '0');
+          hotspot.setAttribute('aria-label', region.title || 'Interactive hotspot');
+
+          hotspot.addEventListener('click', () => showInfo(index));
+          hotspot.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              showInfo(index);
+            }
+          });
+
+          // Touch support
+          hotspot.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            showInfo(index);
+          });
+
+          imageMap.appendChild(hotspot);
+        });
+      }
+
+      // Initial state
+      showInfo(0);
+    });
+
+    // ===== SHOW INFO FUNCTION =====
+    function showInfo(index) {
+      const region = CONFIG.regions[index];
+      const infoPanel = document.getElementById('infoPanel');
+
+      if (!region) return;
+
+      let html = '';
+
+      if (region.image) {
+        html += `<img src="${region.image}" alt="${region.title || 'Info image'}">`;
+      }
+
+      html += `<h2>${region.title || 'Untitled'}</h2>`;
+      html += `<p>${region.desc || ''}</p>`;
+
+      infoPanel.innerHTML = html;
+
+      // Scroll to info panel on mobile
+      if (window.innerWidth < 768) {
+        infoPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  </script>
+
+</body>
+</html>
