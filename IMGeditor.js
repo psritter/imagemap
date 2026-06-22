@@ -89,7 +89,7 @@ window.addEventListener("DOMContentLoaded", () => {
     isUpdatingForm = true;
     titleInput.value = region.title || "";
     descInput.value = region.desc || "";
-    colorInput.value = region.color || "#ff0000";
+    colorInput.value = region.color || "#ff6600";
     sizeInput.value = region.size || 20;
     isUpdatingForm = false;
 
@@ -329,7 +329,7 @@ window.addEventListener("DOMContentLoaded", () => {
       title: "New hotspot",
       desc: "",
       size: 20,
-      color: "#ff0000",
+      color: "#ff6600",
       icon: null,
       image: null
     });

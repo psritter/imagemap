@@ -153,7 +153,7 @@ iframe {
   position: absolute;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: red;
+  background: #FF6600;
   cursor: pointer;
   transition: filter 0.1s;
 }

@@ -137,7 +137,7 @@ class ProjectExporter {
     </section>
   </main>
   <footer>
-    <p>Created with Image Map Editor</p>
+    <p>Created with IMGeditor</p>
   </footer>
   <script>var MAP_REGIONS = ${JSON.stringify(regions)};<\/script>
   <script src="script.js"><\/script>
