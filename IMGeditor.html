@@ -56,7 +56,9 @@
     <p><strong>Click image to add hotspot</strong></p>
     <div id="canvasWrapper">
       <img id="canvasImage" alt="Main canvas image for hotspot placement">
-      <div id="overlay" role="region" aria-label="Image canvas overlay for placing hotspots"></div>
+      <svg id="overlay" viewBox="0 0 100 100" preserveAspectRatio="none"
+           role="region" aria-label="Image canvas overlay for placing hotspots"
+           xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
 
     <!-- HOTSPOT EDITOR PANEL (shown when hotspot selected) -->
@@ -88,14 +90,14 @@
         </div>
 
         <div class="form-group">
-          <label for="sizeInput">Hotspot Size (px)</label>
-          <input type="number" id="sizeInput" min="10" max="100" value="20">
+          <label for="sizeInput">Hotspot Size (% of image width)</label>
+          <input type="number" id="sizeInput" min="1" max="20" step="0.5" value="4">
         </div>
 
         <div class="form-group">
-          <label for="iconUpload">Hotspot Icon (PNG)</label>
-          <input type="file" id="iconUpload" accept="image/png" aria-label="Upload custom hotspot icon">
-          <small>Optional: PNG image to replace circle. Max 100KB, will scale to size above.</small>
+          <label for="iconUpload">Hotspot Icon (SVG recommended)</label>
+          <input type="file" id="iconUpload" accept="image/svg+xml,image/png,image/gif,image/webp" aria-label="Upload custom hotspot icon">
+          <small>Optional: SVG or image to replace the circle. SVG scales best at any size.</small>
           <button type="button" id="clearIconBtn" class="btn-small">Clear Icon</button>
         </div>
 

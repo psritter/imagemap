@@ -328,7 +328,7 @@ window.addEventListener("DOMContentLoaded", () => {
     region.title = titleInput.value;
     region.desc = descInput.value;
     region.color = colorInput.value;
-    region.size = parseInt(sizeInput.value) || 20;
+    region.size = parseFloat(sizeInput.value) || 4;
 
     renderCircles();
     updatePreview();
@@ -539,17 +539,15 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!project.mainImage) return;
 
     saveHistory();
-
-    const rect = overlay.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const vbHeight = getOverlayViewBoxHeight();
+    const point = svgPoint(e);
 
     project.regions.push({
-      x,
-      y,
+      x: Math.max(0, Math.min(100, point.x)),
+      y: Math.max(0, Math.min(100, (point.y / vbHeight) * 100)),
       title: "New hotspot",
       desc: "",
-      size: 20,
+      size: 4,
       color: "#ff6600",
       icon: null,
       image: null
@@ -561,68 +559,114 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ===== RENDER HOTSPOTS =====
   function renderCircles() {
-    overlay.innerHTML = "";
+    const vbHeight = getOverlayViewBoxHeight();
+    overlay.setAttribute("viewBox", `0 0 100 ${vbHeight}`);
+
+    // Remove all children except persistent defs
+    while (overlay.lastChild) overlay.removeChild(overlay.lastChild);
+
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    overlay.appendChild(defs);
 
     project.regions.forEach((r, i) => {
-      const el = document.createElement("div");
-      el.className = "circle";
-      el.style.left = r.x + "%";
-      el.style.top = r.y + "%";
-      el.style.width = r.size + "px";
-      el.style.height = r.size + "px";
+      // r.size is a percentage of image width (e.g. 4 = 4% radius)
+      const radius = (r.size || 4) / 2;
+      const cx = r.x;
+      const cy = (r.y / 100) * vbHeight;
+      const isSelected = i === selected;
 
-      // Icon or circle
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("data-index", String(i));
+      g.style.cursor = "pointer";
+
       if (r.icon) {
-        el.style.background = "none";
-        el.style.backgroundImage = `url(${r.icon})`;
-        el.style.backgroundSize = "contain";
-        el.style.backgroundRepeat = "no-repeat";
-        el.style.backgroundPosition = "center";
+        const clipId = `hsc-${i}`;
+        const clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+        clipPath.setAttribute("id", clipId);
+        const clipCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        clipCircle.setAttribute("cx", String(cx));
+        clipCircle.setAttribute("cy", String(cy));
+        clipCircle.setAttribute("r", String(radius));
+        clipPath.appendChild(clipCircle);
+        defs.appendChild(clipPath);
+
+        const img = document.createElementNS("http://www.w3.org/2000/svg", "image");
+        img.setAttribute("href", r.icon);
+        img.setAttribute("x", String(cx - radius));
+        img.setAttribute("y", String(cy - radius));
+        img.setAttribute("width", String(radius * 2));
+        img.setAttribute("height", String(radius * 2));
+        img.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        img.setAttribute("clip-path", `url(#${clipId})`);
+        g.appendChild(img);
+
+        // Transparent hit circle for interaction
+        const hit = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        hit.setAttribute("cx", String(cx));
+        hit.setAttribute("cy", String(cy));
+        hit.setAttribute("r", String(radius));
+        hit.setAttribute("fill", "transparent");
+        hit.setAttribute("stroke", isSelected ? "#8ac8ff" : "rgba(255,255,255,0.45)");
+        hit.setAttribute("stroke-width", isSelected ? "0.25" : "0.12");
+        g.appendChild(hit);
       } else {
-        el.style.background = r.color;
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", String(cx));
+        circle.setAttribute("cy", String(cy));
+        circle.setAttribute("r", String(radius));
+        circle.setAttribute("fill", r.color || "#ff6600");
+        circle.setAttribute("stroke", isSelected ? "#8ac8ff" : "rgba(255,255,255,0.5)");
+        circle.setAttribute("stroke-width", isSelected ? "0.25" : "0.12");
+        circle.style.filter = "drop-shadow(0 0.3px 0.8px rgba(0,0,0,0.4))";
+        g.appendChild(circle);
       }
 
-      if (i === selected) el.classList.add("selected");
-
       let dragging = false;
-      let offsetX = 0;
-      let offsetY = 0;
+      let startPt = null, startRX = 0, startRY = 0;
 
-      el.addEventListener("mousedown", e => {
+      g.addEventListener("mousedown", e => {
         dragging = true;
         e.stopPropagation();
         saveHistory();
-
-        const rect = overlay.getBoundingClientRect();
-        const px = (r.x / 100) * rect.width;
-        const py = (r.y / 100) * rect.height;
-
-        offsetX = e.clientX - rect.left - px;
-        offsetY = e.clientY - rect.top - py;
+        startPt = svgPoint(e);
+        startRX = r.x;
+        startRY = r.y;
       });
 
-      window.addEventListener("mouseup", () => (dragging = false));
+      window.addEventListener("mouseup", () => { dragging = false; });
 
       window.addEventListener("mousemove", e => {
         if (!dragging) return;
-
-        const rect = overlay.getBoundingClientRect();
-
-        r.x = ((e.clientX - rect.left - offsetX) / rect.width) * 100;
-        r.y = ((e.clientY - rect.top - offsetY) / rect.height) * 100;
-
+        const pt = svgPoint(e);
+        r.x = Math.max(0, Math.min(100, startRX + (pt.x - startPt.x)));
+        const yNext = ((startRY / 100) * vbHeight) + (pt.y - startPt.y);
+        r.y = Math.max(0, Math.min(100, (yNext / vbHeight) * 100));
         renderCircles();
         updatePreview();
       });
 
-      el.addEventListener("click", e => {
+      g.addEventListener("click", e => {
         e.stopPropagation();
         showHotspotPanel(i);
         renderCircles();
       });
 
-      overlay.appendChild(el);
+      overlay.appendChild(g);
     });
+  }
+
+  function getOverlayViewBoxHeight() {
+    const width = overlay.clientWidth || 1;
+    const height = overlay.clientHeight || 1;
+    return (height / width) * 100;
+  }
+
+  // Convert a MouseEvent to SVG viewBox coordinates (0–100 range)
+  function svgPoint(e) {
+    const pt = overlay.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    return pt.matrixTransform(overlay.getScreenCTM().inverse());
   }
 
   // ===== GENERATE PREVIEW HTML =====
@@ -631,14 +675,38 @@ window.addEventListener("DOMContentLoaded", () => {
     const bgColor = project.bgColor || "#f5f5f5";
     const configJson = JSON.stringify(project.regions);
 
-    const hotspotsHtml = project.regions.map((r, i) => {
-      const size  = r.size  || 20;
-      const color = r.color || "#ff0000";
+    // Build an inline SVG overlay using percentage units (no fixed square viewBox),
+    // which keeps circles circular on non-square image containers.
+    const svgHotspots = project.regions.map((r, i) => {
+      const size = (r.size || 4);
+      const radius = size / 2;
+      const cx = r.x;
+      const cy = r.y;
+      const color = r.color || "#ff6600";
+      const label = (r.title || "Hotspot").replace(/"/g, "&quot;");
+
       if (r.icon) {
-        return '<img src="' + r.icon + '" class="hotspot" onclick="show(' + i + ')" style="left:' + r.x + '%;top:' + r.y + '%;width:' + size + 'px;height:' + size + 'px;transform:translate(-50%,-50%);object-fit:contain;position:absolute;cursor:pointer;min-width:44px;min-height:44px;" alt="' + (r.title || 'Hotspot') + '" role="button" tabindex="0">';
+        return (
+          `<image href="${r.icon}" x="${cx - radius}%" y="${cy - radius}%" ` +
+          `width="${size}%" height="${size}%" ` +
+          `preserveAspectRatio="xMidYMid meet" ` +
+          `style="cursor:pointer" ` +
+          `onclick="show(${i})" ` +
+          `role="button" tabindex="0" aria-label="${label}" ` +
+          `onkeypress="if(event.key==='Enter'||event.key===' ')show(${i})"/>` +
+          `<circle cx="${cx}%" cy="${cy}%" r="${radius}%" fill="transparent" ` +
+          `stroke="rgba(255,255,255,0.4)" stroke-width="0.25%" onclick="show(${i})" style="cursor:pointer"/>`
+        );
       }
-      return '<div class="hotspot circle" onclick="show(' + i + ')" style="left:' + r.x + '%;top:' + r.y + '%;width:' + size + 'px;height:' + size + 'px;background:' + color + ';" role="button" tabindex="0" aria-label="' + (r.title || 'Hotspot') + '" onkeypress="if(event.key===\'Enter\')show(' + i + ')"></div>';
-    }).join("");
+      return (
+        `<circle cx="${cx}%" cy="${cy}%" r="${radius}%" fill="${color}" ` +
+        `stroke="rgba(255,255,255,0.5)" stroke-width="0.25%" ` +
+        `style="cursor:pointer;filter:drop-shadow(0 0.4px 1px rgba(0,0,0,0.35))" ` +
+        `onclick="show(${i})" ` +
+        `role="button" tabindex="0" aria-label="${label}" ` +
+        `onkeypress="if(event.key==='Enter'||event.key===' ')show(${i})"/>`
+      );
+    }).join("\n");
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -653,16 +721,17 @@ header{background:#fff;padding:14px;text-align:center;border-bottom:1px solid #e
 header h1{margin:0;font-size:1.4rem;}
 main{display:flex;flex-direction:column;max-width:1200px;margin:0 auto;}
 .image-map-section{width:100%;background:#fff;}
-.image-map{position:relative;width:100%;}
+.image-map{position:relative;width:100%;display:block;}
 .image-map>img{width:100%;height:auto;display:block;}
-.hotspot{position:absolute;transform:translate(-50%,-50%);cursor:pointer;transition:filter 0.15s;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;}
-.hotspot:hover{filter:brightness(1.15);z-index:2;}
-.hotspot.circle{border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.2);}
-.info-section{padding:20px;background:#fff;border-top:1px solid #e0e0e0;min-height:80px;}
-.info-image-wrap{width:100%;display:flex;justify-content:center;margin:0 0 12px;}
-.info-image{width:min(100%,520px);height:auto;max-height:min(52vh,520px);object-fit:contain;display:block;border-radius:6px;cursor:zoom-in;box-shadow:0 8px 24px rgba(0,0,0,.18);}
-.info-section h3{margin:0 0 8px;}
-.info-section p{margin:0;color:#555;}
+.image-map>.hotspot-layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
+.image-map>.hotspot-layer circle,.image-map>.hotspot-layer image{transition:filter 0.15s;}
+.image-map>.hotspot-layer circle:hover,.image-map>.hotspot-layer image:hover{filter:brightness(1.2);}
+.info-section{padding:18px;background:#fff;border-top:1px solid #e0e0e0;min-height:80px;}
+.info-section::after{content:"";display:block;clear:both;}
+.info-image-wrap{float:left;width:clamp(96px,34%,170px);margin:0 12px 8px 0;}
+.info-image{width:100%;aspect-ratio:4/3;height:auto;object-fit:cover;display:block;border-radius:6px;cursor:zoom-in;box-shadow:0 4px 12px rgba(0,0,0,.16);}
+.info-section h3{margin:0 0 6px;line-height:1.25;}
+.info-section p{margin:0;color:#555;line-height:1.45;}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;}
 .lightbox.open{display:flex;}
 .lightbox-image{max-width:min(96vw,1700px);max-height:92vh;width:auto;height:auto;object-fit:contain;border-radius:8px;}
@@ -672,7 +741,7 @@ main{display:flex;flex-direction:column;max-width:1200px;margin:0 auto;}
   header h1{font-size:1.25rem;}
   .image-map>img{max-height:46vh;object-fit:contain;}
   .info-section{padding:14px 16px;}
-  .info-image{max-height:26vh;}
+  .info-image-wrap{width:clamp(88px,32%,150px);margin:0 10px 8px 0;}
   .info-section h3{font-size:1.05rem;margin:0 0 6px;}
 }
 @media(min-width:1024px){
@@ -680,7 +749,7 @@ main{display:flex;flex-direction:column;max-width:1200px;margin:0 auto;}
   .image-map-section{flex:2;border-right:1px solid #e0e0e0;}
   .info-section{flex:1;border-top:none;position:sticky;top:0;}
   .image-map>img{max-height:none;}
-  .info-image{max-height:min(52vh,520px);}
+  .info-image-wrap{width:clamp(100px,42%,190px);}
 }
 </style>
 </head>
@@ -690,7 +759,9 @@ main{display:flex;flex-direction:column;max-width:1200px;margin:0 auto;}
   <section class="image-map-section">
     <div class="image-map">
       <img src="${project.mainImage}" alt="${title}">
-      ${hotspotsHtml}
+      <svg class="hotspot-layer" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        ${svgHotspots}
+      </svg>
     </div>
   </section>
   <section class="info-section" id="info">

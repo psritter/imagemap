@@ -11,7 +11,7 @@ class ProjectExporter {
   /** File extension from a data-URL mime type */
   _ext(dataUrl) {
     const mime = dataUrl.split(";")[0].split(":")[1];
-    return ({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" })[mime] || "jpg";
+    return ({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/svg+xml": "svg" })[mime] || "jpg";
   }
 
   /** Raw base64 payload from a data-URL */
@@ -96,19 +96,33 @@ class ProjectExporter {
    * Generate index.html for the zip.
    */
   generateHTML(mainPath, regions, title) {
-    const hotspotsHtml = regions.map((r, i) => {
-      const size = r.size || 20;
+    const svgHotspots = regions.map((r, i) => {
+      const size = (r.size || 4);
+      const radius = size / 2;
+      const label  = this._esc(r.title || "Hotspot");
+      const color  = r.color || "#ff6600";
       if (r.iconPath) {
-        return `    <img src="${r.iconPath}" class="hotspot icon"
-      style="left:${r.x}%;top:${r.y}%;width:${size}px;height:${size}px;"
-      alt="${this._esc(r.title)}" role="button" tabindex="0"
-      onclick="showInfo(${i})" onkeypress="if(event.key==='Enter')showInfo(${i})">`.trim();
+        return (
+          `<image href="${r.iconPath}" x="${r.x - radius}%" y="${r.y - radius}%" ` +
+          `width="${size}%" height="${size}%" ` +
+          `preserveAspectRatio="xMidYMid meet" ` +
+          `style="cursor:pointer" onclick="showInfo(${i})" ` +
+          `role="button" tabindex="0" aria-label="${label}" ` +
+          `onkeypress="if(event.key==='Enter'||event.key===' ')showInfo(${i})"/>` +
+          `<circle cx="${r.x}%" cy="${r.y}%" r="${radius}%" fill="transparent" ` +
+          `stroke="rgba(255,255,255,0.4)" stroke-width="0.25%" ` +
+          `onclick="showInfo(${i})" style="cursor:pointer"/>`
+        );
       }
-      return `    <div class="hotspot circle"
-      style="left:${r.x}%;top:${r.y}%;width:${size}px;height:${size}px;background:${r.color || "#ff0000"};"
-      role="button" tabindex="0" aria-label="${this._esc(r.title || "Hotspot")}"
-      onclick="showInfo(${i})" onkeypress="if(event.key==='Enter')showInfo(${i})"></div>`.trim();
-    }).join("\n    ");
+      return (
+        `<circle cx="${r.x}%" cy="${r.y}%" r="${radius}%" fill="${color}" ` +
+        `stroke="rgba(255,255,255,0.5)" stroke-width="0.25%" ` +
+        `style="cursor:pointer;filter:drop-shadow(0 0.4px 1px rgba(0,0,0,0.35))" ` +
+        `onclick="showInfo(${i})" ` +
+        `role="button" tabindex="0" aria-label="${label}" ` +
+        `onkeypress="if(event.key==='Enter'||event.key===' ')showInfo(${i})"/>`
+      );
+    }).join("\n        ");
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -127,7 +141,9 @@ class ProjectExporter {
     <section class="image-map-section">
       <div class="image-map" id="imageMap">
         <img src="${mainPath}" alt="${this._esc(title)}" id="mainImg">
-    ${hotspotsHtml}
+        <svg class="hotspot-layer" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          ${svgHotspots}
+        </svg>
       </div>
     </section>
     <section class="info-section">
@@ -184,73 +200,69 @@ main {
 .image-map-section { width: 100%; background: #fff; }
 
 .image-map {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-}
+  .image-map > img { width: 100%; height: auto; display: block; }
 
-.image-map > img { width: 100%; height: auto; display: block; }
-
-/* Hotspots */
-.hotspot {
-  position: absolute;
-  cursor: pointer;
-  transform: translate(-50%, -50%);
-  transition: filter 0.15s, transform 0.15s;
-  min-width: 44px;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hotspot:hover { filter: brightness(1.15); z-index: 2; }
-.hotspot:active { transform: translate(-50%, -50%) scale(0.93); }
-.hotspot:focus { outline: 3px solid #007bff; outline-offset: 3px; }
-
-.hotspot.circle {
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0,0,0,.2);
-}
-
-.hotspot.icon {
+  /* SVG hotspot overlay — fills the image exactly and scales with it */
+  .hotspot-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
   background-color: transparent;
   background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,.2));
+  .hotspot-layer circle,
+  .hotspot-layer image {
+    transition: filter 0.15s;
+  }
+
+  .hotspot-layer circle:hover,
+  .hotspot-layer image:hover {
+    filter: brightness(1.2);
+  }
+
+  .hotspot-layer circle:focus,
+  .hotspot-layer image:focus {
+    outline: none;
+    stroke: #007bff !important;
+    stroke-width: 1 !important;
 }
 
 /* Info panel */
 .info-section {
   width: 100%;
-  padding: 20px;
+  padding: 18px;
   background: #fff;
   border-top: 1px solid #e0e0e0;
+}
+
+.info-section::after {
+  content: "";
+  display: block;
+  clear: both;
 }
 
 .info-panel { min-height: 80px; }
 
 .info-image-wrap {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin: 0 0 12px;
+  float: left;
+  width: clamp(96px, 34%, 170px);
+  margin: 0 12px 8px 0;
 }
 
 .info-image {
-  width: min(100%, 520px);
+  width: 100%;
+  aspect-ratio: 4 / 3;
   height: auto;
   display: block;
-  max-height: min(52vh, 520px);
-  object-fit: contain;
+  object-fit: cover;
   border-radius: 6px;
   cursor: zoom-in;
-  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  box-shadow: 0 4px 12px rgba(0,0,0,.16);
 }
 
-.info-panel h2 { margin: 0 0 8px; font-size: 1.2rem; }
-.info-panel p { margin: 0; color: #555; }
+.info-panel h2 { margin: 0 0 6px; font-size: 1.2rem; line-height: 1.25; }
+.info-panel p { margin: 0; color: #555; line-height: 1.45; }
 .placeholder { color: #999; font-style: italic; }
 
 .lightbox {
@@ -305,8 +317,8 @@ footer {
   header { padding: 12px; }
   header h1 { font-size: 1.75rem; }
   .image-map > img { max-height: 46vh; object-fit: contain; }
-  .info-section { padding: 22px; }
-  .info-image { max-height: 26vh; }
+  .info-section { padding: 14px 16px; }
+  .info-image-wrap { width: clamp(88px, 32%, 150px); margin: 0 10px 8px 0; }
   .info-panel h2 { margin-bottom: 6px; }
 }
 
@@ -328,7 +340,7 @@ footer {
     top: 0;
   }
   .image-map > img { max-height: none; }
-  .info-image { max-height: min(52vh, 520px); }
+  .info-image-wrap { width: clamp(100px, 42%, 190px); }
 }
 
 /* Desktop (1200px+) */
@@ -568,9 +580,15 @@ footer {
     .info-section {
       width: 100%;
       background: #fff;
-      padding: 16px;
+      padding: 18px;
       flex: 1;
       border-top: 1px solid #e0e0e0;
+    }
+
+    .info-section::after {
+      content: "";
+      display: block;
+      clear: both;
     }
 
     .info-panel {
@@ -578,24 +596,28 @@ footer {
     }
 
     .info-panel img {
-      width: 100%;
+      float: left;
+      width: clamp(96px, 34%, 170px);
+      aspect-ratio: 4 / 3;
       height: auto;
-      max-width: 360px;
+      object-fit: cover;
       display: block;
-      margin: 0 auto 12px;
-      border-radius: 4px;
+      margin: 0 12px 8px 0;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.16);
     }
 
     .info-panel h2 {
-      margin: 0 0 8px 0;
+      margin: 0 0 6px 0;
       font-size: 1.25rem;
       color: #222;
+      line-height: 1.25;
     }
 
     .info-panel p {
       margin: 0;
       color: #555;
-      line-height: 1.6;
+      line-height: 1.45;
     }
 
     .info-panel .placeholder {
@@ -629,12 +651,12 @@ footer {
       }
 
       .info-section {
-        padding: 20px;
+        padding: 14px 16px;
       }
 
       .info-panel img {
-        max-height: 26vh;
-        object-fit: contain;
+        width: clamp(88px, 32%, 150px);
+        margin: 0 10px 8px 0;
       }
 
       .info-panel h2 {
@@ -664,7 +686,7 @@ footer {
       }
 
       .info-panel img {
-        max-height: none;
+        width: clamp(100px, 42%, 190px);
       }
     }
 
