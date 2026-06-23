@@ -169,8 +169,10 @@ window.addEventListener("DOMContentLoaded", () => {
     const payload = buildProjectFilePayload();
     const suggestedName = `${sanitizeFileName(project.title)}.imgmap.json`;
 
-    try {
-      if (window.showSaveFilePicker) {
+    // Try native Save As dialog (Chrome/Edge on HTTPS). On any failure other than
+    // explicit user cancel, fall through to the reliable blob-download path.
+    if (window.showSaveFilePicker) {
+      try {
         const handle = await window.showSaveFilePicker({
           suggestedName,
           types: [{
@@ -178,33 +180,32 @@ window.addEventListener("DOMContentLoaded", () => {
             accept: { "application/json": [".json", ".imgmap.json"] }
           }]
         });
-
         await writeProjectWithHandle(handle, payload);
         currentProjectHandle = handle;
         setStorageStatus("Project saved to local drive.", "success");
         return;
+      } catch (error) {
+        if (error && error.name === "AbortError") {
+          // User dismissed the picker — do nothing.
+          return;
+        }
+        // Any other error (SecurityError, NotAllowedError, etc.) — fall through
+        // to the blob-download fallback below.
+        console.warn("showSaveFilePicker failed, falling back to download:", error);
       }
+    }
 
+    // Fallback: trigger a browser download. Works on all static hosts including
+    // GitHub Pages, VS Code Live Preview, Firefox, and Safari.
+    try {
       const fileSize = downloadProjectFile(suggestedName, payload);
       if (fileSize <= 0) {
         throw new Error("Generated project file was empty.");
       }
-
-      if (isEmbeddedPreviewContext()) {
-        setStorageStatus("Project download started. VS Code Live Preview may not support direct Save As reliably; use an external browser if the file is empty.", "info");
-      } else {
-        setStorageStatus("Project file downloaded. Choose where to save it.", "success");
-      }
+      setStorageStatus("Project file downloading — check your browser\'s Downloads folder.", "success");
     } catch (error) {
-      if (error && error.name === "AbortError") {
-        return;
-      }
-      console.error("Failed to save project file:", error);
-      if (isEmbeddedPreviewContext()) {
-        setStorageStatus("Could not save project file in VS Code Live Preview. Open the page in an external browser for reliable disk save.", "error");
-      } else {
-        setStorageStatus("Could not save project file.", "error");
-      }
+      console.error("Failed to download project file:", error);
+      setStorageStatus("Could not save project file. Try a different browser.", "error");
     }
   }
 
@@ -225,8 +226,10 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadProjectFromDisk() {
-    try {
-      if (window.showOpenFilePicker) {
+    // Try native Open File dialog (Chrome/Edge on HTTPS). On any failure other
+    // than explicit user cancel, fall through to the hidden file-input path.
+    if (window.showOpenFilePicker) {
+      try {
         const [handle] = await window.showOpenFilePicker({
           multiple: false,
           types: [{
@@ -234,7 +237,6 @@ window.addEventListener("DOMContentLoaded", () => {
             accept: { "application/json": [".json", ".imgmap.json"] }
           }]
         });
-
         const file = await handle.getFile();
         const text = await file.text();
         const loadedProject = readProjectDataFromText(text);
@@ -242,17 +244,20 @@ window.addEventListener("DOMContentLoaded", () => {
         currentProjectHandle = handle;
         setStorageStatus(`Loaded project file: ${file.name}`, "success");
         return;
+      } catch (error) {
+        if (error && error.name === "AbortError") {
+          // User dismissed the picker — do nothing.
+          return;
+        }
+        // Any other error — fall through to the file-input fallback below.
+        console.warn("showOpenFilePicker failed, falling back to file input:", error);
       }
-
-      projectFileInput.value = "";
-      projectFileInput.click();
-    } catch (error) {
-      if (error && error.name === "AbortError") {
-        return;
-      }
-      console.error("Failed to load project file:", error);
-      setStorageStatus(error.message || "Could not load project file.", "error");
     }
+
+    // Fallback: trigger the hidden <input type="file">. Works on all static
+    // hosts including GitHub Pages, VS Code Live Preview, Firefox, and Safari.
+    projectFileInput.value = "";
+    projectFileInput.click();
   }
 
   async function handleProjectFileInputChange(e) {
