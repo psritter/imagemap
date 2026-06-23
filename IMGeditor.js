@@ -25,6 +25,10 @@ window.addEventListener("DOMContentLoaded", () => {
   const clearImageBtn = document.getElementById("clearImageBtn");
   const undoBtn       = document.getElementById("undoBtn");
   const redoBtn       = document.getElementById("redoBtn");
+  const saveProjectBtn = document.getElementById("saveProjectBtn");
+  const loadProjectBtn = document.getElementById("loadProjectBtn");
+  const projectStorageStatus = document.getElementById("projectStorageStatus");
+  const projectFileInput = document.getElementById("projectFileInput");
 
   // Export elements
   const exportBtn        = document.getElementById("exportBtn");
@@ -49,12 +53,221 @@ window.addEventListener("DOMContentLoaded", () => {
   let history = [];
   let future = [];
   let isUpdatingForm = false; // Prevent feedback loops
+  let currentProjectHandle = null;
 
   // ===== UTILITY FUNCTIONS =====
   function saveHistory() {
     history.push(JSON.stringify(project));
     future = [];
     updateUndoRedoButtons();
+  }
+
+  function cloneProject(data) {
+    return JSON.parse(JSON.stringify(data));
+  }
+
+  function sanitizeFileName(value) {
+    const base = String(value || "image-map-project").trim() || "image-map-project";
+    return base
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "image-map-project";
+  }
+
+  function normalizeProject(data) {
+    const normalized = {
+      mainImage: typeof data?.mainImage === "string" ? data.mainImage : "",
+      title: typeof data?.title === "string" ? data.title : "Image Map",
+      bgColor: typeof data?.bgColor === "string" ? data.bgColor : "#ffffff",
+      regions: Array.isArray(data?.regions) ? data.regions : []
+    };
+
+    normalized.regions = normalized.regions.map(region => ({
+      x: Number.isFinite(Number(region?.x)) ? Number(region.x) : 50,
+      y: Number.isFinite(Number(region?.y)) ? Number(region.y) : 50,
+      title: typeof region?.title === "string" ? region.title : "",
+      desc: typeof region?.desc === "string" ? region.desc : "",
+      size: Number.isFinite(Number(region?.size)) ? Number(region.size) : 20,
+      color: typeof region?.color === "string" ? region.color : "#ff6600",
+      icon: typeof region?.icon === "string" ? region.icon : null,
+      image: typeof region?.image === "string" ? region.image : null
+    }));
+
+    return normalized;
+  }
+
+  function setStorageStatus(message, kind = "info") {
+    projectStorageStatus.textContent = message;
+    if (kind === "error") {
+      projectStorageStatus.style.color = "#f97777";
+      return;
+    }
+    if (kind === "success") {
+      projectStorageStatus.style.color = "#6dd98b";
+      return;
+    }
+    projectStorageStatus.style.color = "#8fb9d8";
+  }
+
+  function syncProjectInputs() {
+    projectTitleInput.value = project.title || "";
+    bgColorInput.value = project.bgColor || "#ffffff";
+  }
+
+  function applyLoadedProject(snapshot) {
+    project = normalizeProject(snapshot);
+    currentProjectHandle = null;
+    selected = null;
+    history = [];
+    future = [];
+    iconUpload.value = "";
+    infoImage.value = "";
+    hotspotPanel.hidden = true;
+    syncProjectInputs();
+    renderAll();
+    updateUndoRedoButtons();
+  }
+
+  function buildProjectFilePayload() {
+    return JSON.stringify({
+      format: "IMGeditorProject",
+      version: 1,
+      savedAt: new Date().toISOString(),
+      project: cloneProject(project)
+    }, null, 2);
+  }
+
+  function isEmbeddedPreviewContext() {
+    try {
+      return window.self !== window.top;
+    } catch (error) {
+      return true;
+    }
+  }
+
+  function downloadProjectFile(filename, content) {
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+    return blob.size;
+  }
+
+  async function writeProjectWithHandle(handle, payload) {
+    const writable = await handle.createWritable();
+    await writable.write(payload);
+    await writable.close();
+  }
+
+  async function saveProjectToDisk() {
+    const payload = buildProjectFilePayload();
+    const suggestedName = `${sanitizeFileName(project.title)}.imgmap.json`;
+
+    try {
+      if (window.showSaveFilePicker) {
+        const handle = await window.showSaveFilePicker({
+          suggestedName,
+          types: [{
+            description: "IMGeditor Project",
+            accept: { "application/json": [".json", ".imgmap.json"] }
+          }]
+        });
+
+        await writeProjectWithHandle(handle, payload);
+        currentProjectHandle = handle;
+        setStorageStatus("Project saved to local drive.", "success");
+        return;
+      }
+
+      const fileSize = downloadProjectFile(suggestedName, payload);
+      if (fileSize <= 0) {
+        throw new Error("Generated project file was empty.");
+      }
+
+      if (isEmbeddedPreviewContext()) {
+        setStorageStatus("Project download started. VS Code Live Preview may not support direct Save As reliably; use an external browser if the file is empty.", "info");
+      } else {
+        setStorageStatus("Project file downloaded. Choose where to save it.", "success");
+      }
+    } catch (error) {
+      if (error && error.name === "AbortError") {
+        return;
+      }
+      console.error("Failed to save project file:", error);
+      if (isEmbeddedPreviewContext()) {
+        setStorageStatus("Could not save project file in VS Code Live Preview. Open the page in an external browser for reliable disk save.", "error");
+      } else {
+        setStorageStatus("Could not save project file.", "error");
+      }
+    }
+  }
+
+  function readProjectDataFromText(text) {
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (error) {
+      throw new Error("File is not valid JSON.");
+    }
+
+    const projectData = parsed?.project || parsed;
+    if (!projectData || typeof projectData !== "object") {
+      throw new Error("Project file is missing project data.");
+    }
+
+    return normalizeProject(projectData);
+  }
+
+  async function loadProjectFromDisk() {
+    try {
+      if (window.showOpenFilePicker) {
+        const [handle] = await window.showOpenFilePicker({
+          multiple: false,
+          types: [{
+            description: "IMGeditor Project",
+            accept: { "application/json": [".json", ".imgmap.json"] }
+          }]
+        });
+
+        const file = await handle.getFile();
+        const text = await file.text();
+        const loadedProject = readProjectDataFromText(text);
+        applyLoadedProject(loadedProject);
+        currentProjectHandle = handle;
+        setStorageStatus(`Loaded project file: ${file.name}`, "success");
+        return;
+      }
+
+      projectFileInput.value = "";
+      projectFileInput.click();
+    } catch (error) {
+      if (error && error.name === "AbortError") {
+        return;
+      }
+      console.error("Failed to load project file:", error);
+      setStorageStatus(error.message || "Could not load project file.", "error");
+    }
+  }
+
+  async function handleProjectFileInputChange(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const loadedProject = readProjectDataFromText(text);
+      applyLoadedProject(loadedProject);
+      setStorageStatus(`Loaded project file: ${file.name}`, "success");
+    } catch (error) {
+      console.error("Failed to parse selected project file:", error);
+      setStorageStatus(error.message || "Invalid project file.", "error");
+    }
   }
 
   function undo() {
@@ -242,6 +455,9 @@ window.addEventListener("DOMContentLoaded", () => {
   // ===== UNDO / REDO BUTTONS =====
   undoBtn.addEventListener("click", undo);
   redoBtn.addEventListener("click", redo);
+  saveProjectBtn.addEventListener("click", saveProjectToDisk);
+  loadProjectBtn.addEventListener("click", loadProjectFromDisk);
+  projectFileInput.addEventListener("change", handleProjectFileInputChange);
 
   // ===== EXPORT =====
   exportBtn.addEventListener("click", () => {
@@ -438,13 +654,28 @@ main{display:flex;flex-direction:column;max-width:1200px;margin:0 auto;}
 .hotspot:hover{filter:brightness(1.15);z-index:2;}
 .hotspot.circle{border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.2);}
 .info-section{padding:20px;background:#fff;border-top:1px solid #e0e0e0;min-height:80px;}
-.info-section img{max-width:100%;width:auto;height:auto;max-width:400px;display:block;margin:0 auto 12px;border-radius:4px;}
+.info-image-wrap{width:100%;display:flex;justify-content:center;margin:0 0 12px;}
+.info-image{width:min(100%,520px);height:auto;max-height:min(52vh,520px);object-fit:contain;display:block;border-radius:6px;cursor:zoom-in;box-shadow:0 8px 24px rgba(0,0,0,.18);}
 .info-section h3{margin:0 0 8px;}
 .info-section p{margin:0;color:#555;}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+.lightbox.open{display:flex;}
+.lightbox-image{max-width:min(96vw,1700px);max-height:92vh;width:auto;height:auto;object-fit:contain;border-radius:8px;}
+.lightbox-close{position:absolute;top:12px;right:16px;border:none;background:rgba(255,255,255,.15);color:#fff;width:44px;height:44px;border-radius:999px;font-size:30px;line-height:1;cursor:pointer;}
 @media(min-width:768px){
+  header{padding:12px;}
+  header h1{font-size:1.25rem;}
+  .image-map>img{max-height:46vh;object-fit:contain;}
+  .info-section{padding:14px 16px;}
+  .info-image{max-height:26vh;}
+  .info-section h3{font-size:1.05rem;margin:0 0 6px;}
+}
+@media(min-width:1024px){
   main{flex-direction:row;align-items:flex-start;}
   .image-map-section{flex:2;border-right:1px solid #e0e0e0;}
   .info-section{flex:1;border-top:none;position:sticky;top:0;}
+  .image-map>img{max-height:none;}
+  .info-image{max-height:min(52vh,520px);}
 }
 </style>
 </head>
@@ -461,12 +692,49 @@ main{display:flex;flex-direction:column;max-width:1200px;margin:0 auto;}
     <p style="color:#999;font-style:italic;">Click a hotspot to learn more</p>
   </section>
 </main>
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Close full image">&times;</button>
+  <img class="lightbox-image" id="lightboxImage" alt="Full resolution view">
+</div>
 <script>
 const regions=${configJson};
+const lightbox=document.getElementById("lightbox");
+const lightboxImage=document.getElementById("lightboxImage");
+const lightboxClose=document.getElementById("lightboxClose");
+
+function openLightbox(src,alt){
+  if(!src||!lightbox||!lightboxImage)return;
+  lightboxImage.src=src;
+  lightboxImage.alt=alt||"Full resolution image";
+  lightbox.classList.add("open");
+  lightbox.setAttribute("aria-hidden","false");
+}
+
+function closeLightbox(){
+  if(!lightbox||!lightboxImage)return;
+  lightbox.classList.remove("open");
+  lightbox.setAttribute("aria-hidden","true");
+  lightboxImage.removeAttribute("src");
+}
+
+if(lightbox&&lightboxClose){
+  lightboxClose.addEventListener("click",closeLightbox);
+  lightbox.addEventListener("click",e=>{if(e.target===lightbox)closeLightbox();});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeLightbox();});
+}
+
 function show(i){
   const r=regions[i],info=document.getElementById("info");
-  let img=r.image?'<img src="'+r.image+'" alt="'+(r.title||'')+'">':'';
+  let img='';
+  if(r.image){
+    img='<div class="info-image-wrap"><img src="'+r.image+'" class="info-image" alt="'+(r.title||'')+'" role="button" tabindex="0" aria-label="Open full image"></div>';
+  }
   info.innerHTML=img+'<h3>'+(r.title||'')+'</h3>'+'<p>'+(r.desc||'')+'</p>';
+  const infoImage=info.querySelector(".info-image");
+  if(infoImage){
+    infoImage.addEventListener("click",()=>openLightbox(r.image,r.title));
+    infoImage.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openLightbox(r.image,r.title);}});
+  }
   if(window.innerWidth<768)info.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 <\/script>
@@ -487,6 +755,7 @@ function show(i){
   }
 
   // ===== INITIALIZE =====
+  setStorageStatus("Save Project writes a JSON project file to your local drive. In VS Code Live Preview, use an external browser if Save As is blocked.");
   updateUndoRedoButtons();
 
   // Expose to window for debugging

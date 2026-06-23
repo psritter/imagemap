@@ -111,8 +111,12 @@
     <div class="toolbar">
       <button id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo last action">↶ Undo</button>
       <button id="redoBtn" title="Redo (Ctrl+Y)" aria-label="Redo last action">↷ Redo</button>
+      <button id="saveProjectBtn" title="Save project to local drive">💾 Save Project</button>
+      <button id="loadProjectBtn" title="Load project from local drive">📂 Load Project</button>
       <button id="exportBtn" title="Export as ZIP package">📦 Export</button>
     </div>
+    <p id="projectStorageStatus" class="storage-status" aria-live="polite"></p>
+    <input type="file" id="projectFileInput" accept="application/json,.json" hidden>
 
     <!-- EXPORT DIALOG (hidden until triggered) -->
     <dialog id="exportDialog" class="export-dialog">

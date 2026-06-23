@@ -136,6 +136,10 @@ class ProjectExporter {
       </div>
     </section>
   </main>
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close full image">&times;</button>
+    <img class="lightbox-image" id="lightboxImage" alt="Full resolution view">
+  </div>
   <footer>
     <p>Created with IMGeditor</p>
   </footer>
@@ -227,18 +231,66 @@ main {
 
 .info-panel { min-height: 80px; }
 
-.info-panel img {
+.info-image-wrap {
   width: 100%;
-  max-width: 400px;
+  display: flex;
+  justify-content: center;
+  margin: 0 0 12px;
+}
+
+.info-image {
+  width: min(100%, 520px);
   height: auto;
   display: block;
-  margin: 0 auto 12px;
+  max-height: min(52vh, 520px);
+  object-fit: contain;
   border-radius: 6px;
+  cursor: zoom-in;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
 }
 
 .info-panel h2 { margin: 0 0 8px; font-size: 1.2rem; }
 .info-panel p { margin: 0; color: #555; }
 .placeholder { color: #999; font-style: italic; }
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.88);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.lightbox.open {
+  display: flex;
+}
+
+.lightbox-image {
+  max-width: min(96vw, 1700px);
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  border: none;
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
 
 footer {
   padding: 12px;
@@ -248,8 +300,18 @@ footer {
   border-top: 1px solid #e0e0e0;
 }
 
-/* Tablet (768px+): side-by-side */
+/* Tablet (768px+): keep stacked, improve spacing */
 @media (min-width: 768px) {
+  header { padding: 12px; }
+  header h1 { font-size: 1.75rem; }
+  .image-map > img { max-height: 46vh; object-fit: contain; }
+  .info-section { padding: 22px; }
+  .info-image { max-height: 26vh; }
+  .info-panel h2 { margin-bottom: 6px; }
+}
+
+/* Desktop (1024px+): side-by-side */
+@media (min-width: 1024px) {
   main {
     flex-direction: row;
     align-items: flex-start;
@@ -265,7 +327,8 @@ footer {
     position: sticky;
     top: 0;
   }
-  header h1 { font-size: 1.75rem; }
+  .image-map > img { max-height: none; }
+  .info-image { max-height: min(52vh, 520px); }
 }
 
 /* Desktop (1200px+) */
@@ -291,8 +354,25 @@ footer {
 (function () {
   'use strict';
   var regions = typeof MAP_REGIONS !== 'undefined' ? MAP_REGIONS : [];
+  var lightbox = null;
+  var lightboxImage = null;
+  var lightboxClose = null;
 
   document.addEventListener('DOMContentLoaded', function () {
+    lightbox = document.getElementById('lightbox');
+    lightboxImage = document.getElementById('lightboxImage');
+    lightboxClose = document.getElementById('lightboxClose');
+
+    if (lightbox && lightboxClose) {
+      lightboxClose.addEventListener('click', closeLightbox);
+      lightbox.addEventListener('click', function (e) {
+        if (e.target === lightbox) closeLightbox();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeLightbox();
+      });
+    }
+
     // Bind backgroundImage for icon hotspots
     document.querySelectorAll('.hotspot.icon').forEach(function (el, i) {
       if (regions[i] && regions[i].iconPath) {
@@ -308,10 +388,28 @@ footer {
     if (!r || !panel) return;
 
     var html = '';
-    if (r.imagePath) html += '<img src="' + r.imagePath + '" alt="' + esc(r.title) + '">';
+    if (r.imagePath) {
+      html += '<div class="info-image-wrap">';
+      html += '<img src="' + r.imagePath + '" class="info-image" alt="' + esc(r.title) + '"';
+      html += ' role="button" tabindex="0" aria-label="Open full image for ' + esc(r.title) + '">';
+      html += '</div>';
+    }
     html += '<h2>' + esc(r.title || 'Untitled') + '</h2>';
     html += '<p>'  + esc(r.desc  || '')          + '</p>';
     panel.innerHTML = html;
+
+    var infoImage = panel.querySelector('.info-image');
+    if (infoImage) {
+      infoImage.addEventListener('click', function () {
+        openLightbox(r.imagePath, r.title);
+      });
+      infoImage.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openLightbox(r.imagePath, r.title);
+        }
+      });
+    }
 
     if (window.innerWidth < 768) {
       panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -322,6 +420,21 @@ footer {
     return String(s || '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  window.openLightbox = function (src, altText) {
+    if (!lightbox || !lightboxImage || !src) return;
+    lightboxImage.src = src;
+    lightboxImage.alt = altText || 'Full resolution image';
+    lightbox.classList.add('open');
+    lightbox.setAttribute('aria-hidden', 'false');
+  };
+
+  function closeLightbox() {
+    if (!lightbox || !lightboxImage) return;
+    lightbox.classList.remove('open');
+    lightbox.setAttribute('aria-hidden', 'true');
+    lightboxImage.removeAttribute('src');
   }
 }());
 `;
@@ -500,8 +613,37 @@ footer {
       border-top: 1px solid #e0e0e0;
     }
 
-    /* Tablet (768px+): Show info panel beside image on larger screens */
+    /* Tablet (768px+): Keep info below image with more spacing */
     @media (min-width: 768px) {
+      header {
+        padding: 12px;
+      }
+
+      header h1 {
+        font-size: 1.75rem;
+      }
+
+      .image-map img {
+        max-height: 46vh;
+        object-fit: contain;
+      }
+
+      .info-section {
+        padding: 20px;
+      }
+
+      .info-panel img {
+        max-height: 26vh;
+        object-fit: contain;
+      }
+
+      .info-panel h2 {
+        margin-bottom: 6px;
+      }
+    }
+
+    /* Desktop (1024px+): Show info panel beside image */
+    @media (min-width: 1024px) {
       main {
         flex-direction: row;
         gap: 0;
@@ -517,8 +659,12 @@ footer {
         border-top: none;
       }
 
-      header h1 {
-        font-size: 1.75rem;
+      .image-map img {
+        max-height: none;
+      }
+
+      .info-panel img {
+        max-height: none;
       }
     }
 
