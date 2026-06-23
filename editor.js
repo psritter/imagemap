@@ -42,6 +42,11 @@ const saveBtn = document.getElementById('saveBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 const resetBtn = document.getElementById('resetBtn');
 const exportBtn = document.getElementById('exportBtn');
+const loadProjectBtn = document.getElementById('loadProjectBtn');
+
+const LATEST_STORAGE_KEY = 'imagemapData';
+const SNAPSHOT_STORAGE_KEY = 'imagemapProjectSnapshots';
+const MAX_SNAPSHOTS = 25;
 
 /**
  * Load available images from images.json manifest
@@ -443,8 +448,19 @@ function saveLocally() {
         mapData.settings.mapWidth = parseInt(mapWidth.value);
         mapData.settings.mapHeight = parseInt(mapHeight.value);
         
-        // Save to localStorage
-        localStorage.setItem('imagemapData', JSON.stringify(mapData));
+        // Save latest copy for backward compatibility
+        localStorage.setItem(LATEST_STORAGE_KEY, JSON.stringify(mapData));
+
+        // Also keep named historical snapshots so older projects can be reloaded later
+        const snapshots = loadSnapshots();
+        snapshots.unshift({
+            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            name: (mapData.settings.pageTitle || 'Untitled Project').trim() || 'Untitled Project',
+            savedAt: new Date().toISOString(),
+            data: JSON.parse(JSON.stringify(mapData))
+        });
+        localStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify(snapshots.slice(0, MAX_SNAPSHOTS)));
+
         console.log('Changes saved to browser storage');
         return true;
     } catch (error) {
@@ -459,7 +475,7 @@ function saveLocally() {
  */
 function loadLocally() {
     try {
-        const stored = localStorage.getItem('imagemapData');
+        const stored = localStorage.getItem(LATEST_STORAGE_KEY);
         if (stored) {
             const data = JSON.parse(stored);
             mapData = data;
@@ -470,6 +486,62 @@ function loadLocally() {
         console.error('Error loading from localStorage:', error);
     }
     return false;
+}
+
+/**
+ * Load snapshot list from localStorage
+ */
+function loadSnapshots() {
+    try {
+        const raw = localStorage.getItem(SNAPSHOT_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        console.error('Error loading project snapshots:', error);
+        return [];
+    }
+}
+
+/**
+ * Load a previously saved project snapshot
+ */
+function loadPreviousProject() {
+    const snapshots = loadSnapshots();
+    if (!snapshots.length) {
+        alert('No saved projects found yet. Click "Save Locally" first.');
+        return;
+    }
+
+    const optionsText = snapshots
+        .slice(0, 10)
+        .map((snapshot, index) => `${index + 1}. ${snapshot.name} (${new Date(snapshot.savedAt).toLocaleString()})`)
+        .join('\n');
+
+    const response = prompt(
+        'Load previous project:\n\n' +
+        optionsText +
+        '\n\nEnter a number (1-' + Math.min(snapshots.length, 10) + '):'
+    );
+
+    if (response === null) return;
+
+    const selectedIndex = parseInt(response, 10) - 1;
+    if (!Number.isInteger(selectedIndex) || selectedIndex < 0 || selectedIndex >= Math.min(snapshots.length, 10)) {
+        alert('Invalid selection.');
+        return;
+    }
+
+    const selectedSnapshot = snapshots[selectedIndex];
+    if (!selectedSnapshot || !selectedSnapshot.data) {
+        alert('Selected project is not available.');
+        return;
+    }
+
+    mapData = selectedSnapshot.data;
+    selectedPointId = null;
+    initializeEditor();
+    alert(`Loaded project: ${selectedSnapshot.name}`);
 }
 
 /**
@@ -697,7 +769,8 @@ function escapeXML(str) {
 function resetToDefaults() {
     if (confirm('Reset all changes to defaults? This cannot be undone.')) {
         // Reset will be done on next load
-        localStorage.removeItem('imagemapData');
+        localStorage.removeItem(LATEST_STORAGE_KEY);
+        localStorage.removeItem(SNAPSHOT_STORAGE_KEY);
         location.reload();
     }
 }
@@ -742,6 +815,7 @@ function setupEventListeners() {
         }
     });
     resetBtn.addEventListener('click', resetToDefaults);
+    loadProjectBtn.addEventListener('click', loadPreviousProject);
     
     // Close modal when clicking outside
     areaEditorModal.addEventListener('click', (e) => {

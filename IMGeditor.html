@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMGeditor</title>
+
+<link rel="stylesheet" href="IMGeditor.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- LEFT: PREVIEW -->
+  <div class="left">
+    <div class="preview-bar">
+      <span class="preview-label">Preview</span>
+      <div class="device-btns">
+        <button class="dev-btn" data-width="375px" data-height="667px" title="Phone (375×667)">📱 Phone</button>
+        <button class="dev-btn" data-width="768px" data-height="1024px" title="Tablet (768×1024)">📗 Tablet</button>
+        <button class="dev-btn active" data-width="100%" data-height="100%" title="Desktop (full width)">🖥️ Desktop</button>
+      </div>
+    </div>
+    <div class="preview-frame-wrap" id="previewWrap">
+      <iframe id="preview" title="Live preview"></iframe>
+    </div>
+  </div>
+
+  <!-- RIGHT: EDITOR -->
+  <div class="right">
+
+    <h2>IMGeditor</h2>
+
+    <!-- PROJECT SETTINGS -->
+    <fieldset>
+      <legend>Project Settings</legend>
+      
+      <div class="form-group">
+        <label for="projectTitle">Title</label>
+        <input type="text" id="projectTitle" placeholder="e.g., Product Showcase" value="Image Map" aria-label="Project title shown above image map">
+      </div>
+
+      <div class="form-group">
+        <label for="bgColor">Background Color</label>
+        <input type="color" id="bgColor" value="#ffffff" aria-label="Background color for image map container">
+      </div>
+    </fieldset>
+
+    <!-- IMAGE UPLOAD -->
+    <fieldset>
+      <legend>Main Image</legend>
+      <input type="file" id="mainImageInput" accept="image/*" aria-label="Upload main image">
+    </fieldset>
+
+    <!-- CANVAS -->
+    <p><strong>Click image to add hotspot</strong></p>
+    <div id="canvasWrapper">
+      <img id="canvasImage" alt="Main canvas image for hotspot placement">
+      <div id="overlay" role="region" aria-label="Image canvas overlay for placing hotspots"></div>
+    </div>
+
+    <!-- HOTSPOT EDITOR PANEL (shown when hotspot selected) -->
+    <div id="hotspotPanel" class="hotspot-panel" hidden>
+      <h3>Edit Hotspot</h3>
+      
+      <form id="hotspotForm" aria-label="Hotspot properties editor">
+        
+        <div class="form-group">
+          <label for="titleInput">Title</label>
+          <input type="text" id="titleInput" placeholder="e.g., Product Name" aria-required="true">
+        </div>
+
+        <div class="form-group">
+          <label for="descInput">Description</label>
+          <textarea id="descInput" placeholder="e.g., A brief description" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="infoImage">Info Panel Image</label>
+          <input type="file" id="infoImage" accept="image/*" aria-label="Upload image for info panel">
+          <small>Optional: Image to display when this hotspot is clicked.</small>
+          <button type="button" id="clearImageBtn" class="btn-small">Clear Image</button>
+        </div>
+
+        <div class="form-group">
+          <label for="colorInput">Hotspot Color</label>
+          <input type="color" id="colorInput" value="#ff0000">
+        </div>
+
+        <div class="form-group">
+          <label for="sizeInput">Hotspot Size (px)</label>
+          <input type="number" id="sizeInput" min="10" max="100" value="20">
+        </div>
+
+        <div class="form-group">
+          <label for="iconUpload">Hotspot Icon (PNG)</label>
+          <input type="file" id="iconUpload" accept="image/png" aria-label="Upload custom hotspot icon">
+          <small>Optional: PNG image to replace circle. Max 100KB, will scale to size above.</small>
+          <button type="button" id="clearIconBtn" class="btn-small">Clear Icon</button>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="deleteBtn" class="btn-danger">Delete Hotspot</button>
+          <button type="button" id="cancelBtn">Close</button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <button id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo last action">↶ Undo</button>
+      <button id="redoBtn" title="Redo (Ctrl+Y)" aria-label="Redo last action">↷ Redo</button>
+      <button id="saveProjectBtn" title="Save project to local drive">💾 Save Project</button>
+      <button id="loadProjectBtn" title="Load project from local drive">📂 Load Project</button>
+      <button id="exportBtn" title="Export as ZIP package">📦 Export</button>
+    </div>
+    <p id="projectStorageStatus" class="storage-status" aria-live="polite"></p>
+    <input type="file" id="projectFileInput" accept="application/json,.json" hidden>
+
+    <!-- EXPORT DIALOG (hidden until triggered) -->
+    <dialog id="exportDialog" class="export-dialog">
+      <div class="dialog-content">
+        <h3>Export Project</h3>
+        
+        <form id="exportForm" method="dialog">
+          <div class="form-group">
+            <label for="projectName">Project Name</label>
+            <input type="text" id="projectName" placeholder="e.g., my-product-map" value="image-map" required>
+          </div>
+
+          <div id="exportValidation" class="validation-message" hidden></div>
+
+          <div class="dialog-actions">
+            <button type="button" id="exportConfirmBtn" class="btn-primary">Export as ZIP</button>
+            <button type="button" id="exportCancelBtn" formmethod="dialog">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="export.js"></script>
+<script src="IMGeditor.js"></script>
+
+</body>
+</html>
