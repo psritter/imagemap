@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IMGeditor</title>
+<title>MapMuseo Editor</title>
 
 <link rel="stylesheet" href="IMGeditor.css">
 </head>
@@ -29,28 +29,7 @@
   <!-- RIGHT: EDITOR -->
   <div class="right">
 
-    <h2>IMGeditor</h2>
-
-    <!-- PROJECT SETTINGS -->
-    <fieldset>
-      <legend>Project Settings</legend>
-      
-      <div class="form-group">
-        <label for="projectTitle">Title</label>
-        <input type="text" id="projectTitle" placeholder="e.g., Product Showcase" value="Image Map" aria-label="Project title shown above image map">
-      </div>
-
-      <div class="form-group">
-        <label for="bgColor">Background Color</label>
-        <input type="color" id="bgColor" value="#ffffff" aria-label="Background color for image map container">
-      </div>
-    </fieldset>
-
-    <!-- IMAGE UPLOAD -->
-    <fieldset>
-      <legend>Main Image</legend>
-      <input type="file" id="mainImageInput" accept="image/*" aria-label="Upload main image">
-    </fieldset>
+    <h2>Editor</h2>
 
     <!-- CANVAS -->
     <p><strong>Click image to add hotspot</strong></p>
@@ -101,6 +80,19 @@
           <button type="button" id="clearIconBtn" class="btn-small">Clear Icon</button>
         </div>
 
+        <div class="form-group checkbox-row">
+          <label>
+            <input type="checkbox" id="linkToMapCheckbox">
+            This hotspot navigates to another room map
+          </label>
+        </div>
+
+        <div class="form-group" id="targetMapGroup">
+          <label for="targetMapSelect">Destination Room Map</label>
+          <select id="targetMapSelect" aria-label="Destination room map"></select>
+          <small>Enable navigation above, then choose the destination room map. On Start Map, new hotspots can be used for room navigation.</small>
+        </div>
+
         <div class="form-actions">
           <button type="button" id="deleteBtn" class="btn-danger">Delete Hotspot</button>
           <button type="button" id="cancelBtn">Close</button>
@@ -108,6 +100,52 @@
 
       </form>
     </div>
+
+    <details class="collapsible-section" open>
+      <summary>Room Maps</summary>
+
+      <fieldset>
+
+      <div class="form-group">
+        <label for="mapSelect">Current Map</label>
+        <select id="mapSelect" aria-label="Select room map"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="mapNameInput">Map Name</label>
+        <input type="text" id="mapNameInput" placeholder="e.g., Overview, Room A">
+      </div>
+
+      <div class="form-group">
+        <label for="roomMapImageInput">Room Map Image</label>
+        <input type="file" id="roomMapImageInput" accept="image/*" aria-label="Upload image for selected room map">
+      </div>
+
+      <div class="inline-actions">
+        <button type="button" id="addMapBtn">+ Add Map</button>
+        <button type="button" id="deleteMapBtn">Delete Map</button>
+      </div>
+      </fieldset>
+    </details>
+
+    <!-- PROJECT SETTINGS -->
+    <details class="collapsible-section" open>
+      <summary>Project Settings</summary>
+
+      <fieldset>
+      
+      <div class="form-group">
+        <label for="projectTitle">Title</label>
+        <input type="text" id="projectTitle" placeholder="e.g., Product Showcase" value="Image Map" aria-label="Project title shown above image map">
+      </div>
+
+      <div class="form-group">
+        <label for="bgColor">Background Color</label>
+        <input type="color" id="bgColor" value="#ffffff" aria-label="Background color for image map container">
+      </div>
+
+      </fieldset>
+    </details>
 
     <!-- TOOLBAR -->
     <div class="toolbar">
